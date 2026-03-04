@@ -209,7 +209,8 @@
 
 .memory-search-icon {
     position: absolute;
-    left: 10px;
+    left: 22px;
+    /* Adjusted to sit inside the input padding */
     top: 50%;
     transform: translateY(-50%);
     color: rgba(255, 255, 255, 0.3);
@@ -220,7 +221,8 @@
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    padding: 7px 8px 7px 30px;
+    padding: 7px 8px 7px 34px;
+    /* Increased padding to accommodate icon */
     color: #fff;
     font-size: 13px;
     outline: none;
@@ -267,8 +269,8 @@
 .memory-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    /* Increased gap to prevent overlap */
+    gap: 4px;
+    /* Reduced gap slightly */
     overflow-y: auto;
     padding: 0 12px;
     flex: 1;
@@ -293,7 +295,8 @@
 }
 
 .memory-item {
-    padding: 10px 14px;
+    padding: 8px 14px;
+    /* Reduced vertical padding slightly */
     font-size: 13.5px;
     color: rgba(255, 255, 255, 0.5);
     text-align: left;
