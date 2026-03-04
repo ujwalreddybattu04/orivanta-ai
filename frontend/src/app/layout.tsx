@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
-import "@/styles/globals.css";
 import "@/styles/variables.css";
-import "@/styles/animations.css";
+import "@/styles/globals.css";
 import "@/styles/typography.css";
+import "@/styles/animations.css";
+import "@/styles/sidebar.css";
+import "@/styles/searchbar.css";
+import "@/styles/home.css";
+import "@/styles/thread.css";
 import { Sidebar } from "@/components/layout";
 
 export const metadata: Metadata = {

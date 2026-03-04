@@ -1,5 +1,74 @@
-"""LLM service — provider-agnostic abstraction for calling language models."""
-# TODO: Implement LLM provider abstraction
-# - Route to correct provider based on model selection
-# - Stream responses
-# - Handle errors and fallbacks
+import json
+import logging
+from typing import AsyncGenerator, Dict, Any, List
+
+from groq import AsyncGroq
+from src.config.settings import settings
+
+logger = logging.getLogger(__name__)
+
+class GroqLLMService:
+    def __init__(self):
+        self.api_key = settings.GROQ_API_KEY
+        if not self.api_key:
+            logger.warning("GROQ_API_KEY is not set. LLM generation will fail.")
+            self.client = None
+        else:
+            self.client = AsyncGroq(api_key=self.api_key)
+            
+        self.default_model = "llama-3.3-70b-versatile"
+
+    def _build_system_prompt(self, context_results: List[Dict[str, Any]]) -> str:
+        """Constructs the system prompt with context from search results."""
+        prompt = (
+            "You are Orivanta AI, a highly intelligent and precise answer engine. "
+            "Your goal is to provide comprehensive, accurate, and well-structured answers "
+            "based strictly on the provided web search context.\n\n"
+            "CRITICAL INSTRUCTIONS:\n"
+            "1. You MUST use inline citations in the format [1], [2], etc., immediately after the fact they support.\n"
+            "2. Ensure citations correspond EXACTLY to the numbers assigned in the context block below.\n"
+            "3. Do NOT make up information. If the context does not contain the answer, state that you don't know based on the search results.\n"
+            "4. Format the output using beautiful Markdown: use bold text, bullet points, and headers (## or ###) to make the answer easy to read.\n"
+            "5. Do NOT output a 'References' or 'Sources' list at the very end. The frontend UI handles the sources panel. ONLY use inline citations like [1].\n\n"
+            "CONTEXT block:\n"
+        )
+        
+        for idx, result in enumerate(context_results, start=1):
+            prompt += f"Source [{idx}]:\n"
+            prompt += f"Title: {result.get('title', 'N/A')}\n"
+            prompt += f"Domain: {result.get('domain', 'N/A')}\n"
+            prompt += f"Content: {result.get('snippet', '')}\n\n"
+            
+        return prompt
+
+    async def stream_answer(self, query: str, context_results: List[Dict[str, Any]]) -> AsyncGenerator[str, None]:
+        """
+        Streams the LLM response chunk by chunk using Groq.
+        """
+        if not self.client:
+            yield "LLM generation failed because Groq API key is missing."
+            return
+
+        system_prompt = self._build_system_prompt(context_results)
+        
+        try:
+            stream = await self.client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": query}
+                ],
+                model=self.default_model,
+                temperature=0.2, # Low temperature for factual RAG
+                max_tokens=2048,
+                stream=True,
+            )
+            
+            async for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content is not None:
+                    yield chunk.choices[0].delta.content
+                    
+        except Exception as e:
+            logger.exception(f"Groq API streaming failed: {e}")
+            raise e
+
+groq_llm_service = GroqLLMService()

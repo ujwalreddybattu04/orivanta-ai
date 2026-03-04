@@ -2,5 +2,5 @@ import { api } from "@/lib/api";
 
 export const discoverService = {
     getFeed: (category?: string) =>
-        api.get("/api/v1/discover", category ? { category } : undefined),
+        api.get("/api/v1/discover", category ? { params: { category } } : undefined),
 };

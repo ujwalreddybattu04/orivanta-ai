@@ -1,0 +1,1386 @@
+/* =============================================================================
+   Orivanta AI — Search Answer Page — Reference Design Match
+   Matches the provided screenshot exactly in dark premium theme
+   ============================================================================= */
+
+/* ══════════════════════════════════════
+   ACCESSIBILITY
+   ══════════════════════════════════════ */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.7);
+    outline-offset: 2px;
+    border-radius: 4px;
+    /* Default soft rounding for focus */
+}
+
+/* ══════════════════════════════════════
+   PAGE SHELL
+   ══════════════════════════════════════ */
+
+.sp-page {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0px;
+    background-color: #000000;
+    position: relative;
+    z-index: 10;
+}
+
+/* ══════════════════════════════════════
+   TAB BAR — Lives inside sp-main, aligns with content
+   ══════════════════════════════════════ */
+
+.sp-tabbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 16px 24px 0;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: #000000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sp-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.sp-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 16px;
+    border-radius: 0;
+    border: none;
+    background: none;
+    color: rgba(255, 255, 255, 0.38);
+    font-size: 0.85rem;
+    font-weight: 450;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    position: relative;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.sp-tab:hover {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.sp-tab--active {
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
+    border-bottom-color: rgba(255, 255, 255, 0.9);
+}
+
+.sp-tabbar-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-right: 4px;
+}
+
+.sp-more-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    color: rgba(255, 255, 255, 0.35);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.sp-more-btn:hover {
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.sp-share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.sp-share-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* ══════════════════════════════════════
+   TWO-COLUMN LAYOUT
+   ══════════════════════════════════════ */
+
+.sp-layout {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 100vh;
+    padding: 0 16px;
+    gap: 28px;
+    position: relative;
+    max-width: 1080px;
+    /* Compress the overall layout bounds for tighter grouping */
+    margin: 0 auto;
+}
+
+.sp-layout--panel-open {
+    justify-content: center;
+    gap: 28px;
+}
+
+/* ══════════════════════════════════════
+   MAIN COLUMN 
+   ══════════════════════════════════════ */
+
+.sp-main {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    max-width: 720px;
+    /* Restrict Answer width to simulate textbook width */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-top: 32px;
+    transition: margin 0.3s ease;
+    position: relative;
+}
+
+/* Content area below the tab bar */
+.sp-content {
+    padding: 28px 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    /* Hide scrollbar for a cleaner look */
+}
+
+.sp-content::-webkit-scrollbar {
+    display: none;
+}
+
+/* ══════════════════════════════════════
+   USER QUERY BUBBLE (Right Aligned)
+   ══════════════════════════════════════ */
+
+.sp-query-row {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 32px;
+    margin-top: 16px;
+    width: 100%;
+}
+
+.sp-query-bubble {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    max-width: 100%;
+    line-height: 1.3;
+    word-break: break-word;
+    background: transparent;
+    padding: 0;
+    border: none;
+}
+
+/* ══════════════════════════════════════
+   ANSWER BODY — clean typography
+   ══════════════════════════════════════ */
+
+.sp-answer-body {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 1.05rem;
+    /* Larger font size for better readability */
+    line-height: 1.85;
+    /* Better line height */
+    margin-bottom: 20px;
+}
+
+/* Override AnswerStream card styling — answer just flows as text */
+.sp-answer-body .answer-stream {
+    background: none;
+    border: none;
+    border-radius: 0;
+}
+
+.sp-answer-body .answer-stream-header {
+    display: none;
+}
+
+.sp-answer-body .answer-stream-content {
+    padding: 0;
+    line-height: 1.8;
+    font-size: 0.96rem;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+/* Paragraph */
+.answer-paragraph {
+    margin: 0 0 16px;
+    line-height: 1.8;
+}
+
+.answer-paragraph:last-child {
+    margin-bottom: 0;
+}
+
+/* Headings in answer */
+.answer-h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 22px 0 9px;
+    padding: 0;
+    border: none;
+    letter-spacing: -0.01em;
+}
+
+.answer-h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 18px 0 7px;
+}
+
+/* Lists */
+.answer-list {
+    padding-left: 18px;
+    margin: 4px 0 14px;
+}
+
+.answer-list-ordered {
+    list-style-type: decimal;
+}
+
+.answer-list-item {
+    margin-bottom: 7px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.84);
+}
+
+.answer-bold {
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.answer-link {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s;
+}
+
+.answer-link:hover {
+    color: #ffffff;
+}
+
+.answer-code-inline {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.875em;
+    font-family: "Fira Code", monospace;
+}
+
+
+.answer-code-block {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 14px 0;
+    overflow-x: auto;
+    font-family: "Fira Code", monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+/* ── Citation badges — inline, like Perplexity's 'ibm +1' pills ── */
+.citation-badge-rendered {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.55);
+    vertical-align: middle;
+    margin: 0 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.4;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+}
+
+.citation-badge-rendered:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: rgba(255, 255, 255, 0.88);
+}
+
+/* Streaming cursor */
+.answer-cursor {
+    display: inline-block;
+    color: rgba(255, 255, 255, 0.7);
+    animation: blink-cursor 0.75s step-end infinite;
+    margin-left: 2px;
+}
+
+@keyframes blink-cursor {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+/* ══════════════════════════════════════
+   BOTTOM ACTION ROW
+   ══════════════════════════════════════ */
+
+.sp-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 24px;
+}
+
+.sp-action-left,
+.sp-action-right {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.sp-icon-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    color: rgba(255, 255, 255, 0.35);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.sp-icon-btn:hover {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.sp-sources-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    /* Fully rounded pill shape like Perplexity */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-left: 4px;
+}
+
+.sp-sources-badge:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.sp-sources-badge--active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Overlapping Favicon Cluster */
+.sp-sources-badge-icons {
+    display: flex;
+    align-items: center;
+}
+
+.sp-sources-badge-icon-wrapper {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    border: 1px solid #222;
+    /* Creates definition between overlapping icons */
+    margin-right: -6px;
+    /* Core overlap mechanic */
+}
+
+.sp-sources-badge-icon-wrapper:last-child {
+    margin-right: 0;
+}
+
+.sp-sources-badge-icon-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sp-sources-badge-icon-letter {
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.15);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sp-sources-badge-text {
+    font-size: 0.78rem;
+    font-weight: 500;
+    font-family: inherit;
+    margin-left: 6px;
+}
+
+/* ══════════════════════════════════════
+   FOLLOW-UPS  (↳ arrows)
+   ══════════════════════════════════════ */
+
+.sp-followups {
+    margin-bottom: 24px;
+    animation: fadeInUp 0.3s ease;
+}
+
+.sp-followups-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.38);
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+}
+
+.sp-followups-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.sp-followup-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 8px 0;
+    border: none;
+    background: none;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.9rem;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: color 0.15s ease;
+}
+
+.sp-followup-item:last-child {
+    border-bottom: none;
+}
+
+.sp-followup-item:hover {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.sp-followup-arrow {
+    color: rgba(255, 255, 255, 0.22);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.sp-followup-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* ══════════════════════════════════════
+   LINKS TAB / IMAGES TAB
+   ══════════════════════════════════════ */
+
+.sp-links-tab {
+    padding: 8px 0;
+}
+
+.sp-links-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sp-link-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.03);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.sp-link-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.sp-link-num {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+}
+
+.citation-pill {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    /* Matches Perplexity pill background */
+    padding: 0 4px;
+    margin: 0 4px;
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+    vertical-align: text-bottom;
+    transition: background 0.2s;
+}
+
+.citation-pill:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.citation-pill-domain {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    /* Slightly dimmed text inside pill */
+    letter-spacing: 0.2px;
+}
+
+.sp-link-domain {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.35);
+    margin-bottom: 3px;
+}
+
+.sp-link-title {
+    font-size: 0.95rem;
+    /* Increased text hierarchy */
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.82);
+    line-height: 1.3;
+    margin-bottom: 4px;
+}
+
+.sp-link-snippet {
+    font-size: 0.85rem;
+    /* Better readability */
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.sp-images-tab {
+    padding: 16px 0;
+}
+
+.sp-empty-tab {
+    padding: 48px 0;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.875rem;
+}
+
+/* ══════════════════════════════════════
+   IMAGES TAB EMPTY / SKELETON
+   ══════════════════════════════════════ */
+
+.sp-images-empty-container {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.sp-empty-images-msg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.sp-images-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.sp-skeleton-image-box {
+    aspect-ratio: 16/9;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.07) 50%, rgba(255, 255, 255, 0.03) 75%);
+    background-size: 200% 100%;
+    border-radius: 8px;
+    animation: spulse 2s infinite linear;
+}
+
+@keyframes spulse {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ══════════════════════════════════════
+   RIGHT SOURCES PANEL
+   ══════════════════════════════════════ */
+
+.sp-sources-panel {
+    width: 320px;
+    flex-shrink: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    /* Softer divider */
+    padding: 16px 0 24px 28px;
+    /* Tighter left padding flush against boundary */
+    /* Matches main column Y-start below header */
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    animation: slideInRight 0.22s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.sp-sources-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.sp-sources-panel-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 3px;
+}
+
+.sp-sources-panel-subtitle {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.35);
+    margin: 0 0 16px;
+}
+
+.sp-sources-panel-close {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.sp-sources-panel-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.sp-sources-panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sp-source-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 8px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.15s ease;
+    border: 1px solid transparent;
+}
+
+.sp-source-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
+.sp-source-item-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    overflow: hidden;
+}
+
+.sp-source-item-letter {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.sp-source-item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.sp-source-item-domain {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 2px;
+}
+
+.sp-source-item-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.35;
+    margin-bottom: 3px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.sp-source-item-snippet {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.32);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ══════════════════════════════════════
+   ERROR STATE
+   ══════════════════════════════════════ */
+
+.sp-error {
+    text-align: center;
+    padding: 52px 32px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.018);
+    margin-bottom: 24px;
+}
+
+.sp-error-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+}
+
+.sp-error-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 8px;
+}
+
+.sp-error-msg {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.42);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.sp-error-msg code {
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.85em;
+}
+
+/* ══════════════════════════════════════
+   SKELETON LOADER
+   ══════════════════════════════════════ */
+
+@keyframes shimmer {
+    0% {
+        background-position: -700px 0;
+    }
+
+    100% {
+        background-position: 700px 0;
+    }
+}
+
+.skeleton-line {
+    border-radius: 5px;
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.04) 25%,
+            rgba(255, 255, 255, 0.08) 50%,
+            rgba(255, 255, 255, 0.04) 75%);
+    background-size: 1400px 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+    height: 14px;
+    margin-bottom: 10px;
+}
+
+.skeleton-w-90 {
+    width: 90%;
+}
+
+.skeleton-w-85 {
+    width: 85%;
+}
+
+.skeleton-w-80 {
+    width: 80%;
+}
+
+.skeleton-w-75 {
+    width: 75%;
+}
+
+.skeleton-w-70 {
+    width: 70%;
+}
+
+.skeleton-w-65 {
+    width: 65%;
+}
+
+.skeleton-w-60 {
+    width: 60%;
+}
+
+.skeleton-spacer {
+    background: none;
+    margin-block: 14px;
+}
+
+.answer-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.skeleton-sources {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.skeleton-source-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.skeleton-favicon {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    margin-bottom: 6px;
+}
+
+.skeleton-domain {
+    width: 55%;
+    height: 10px;
+    margin-bottom: 6px;
+}
+
+.skeleton-title {
+    width: 80%;
+    height: 12px;
+    margin-bottom: 4px;
+}
+
+.skeleton-snippet {
+    width: 65%;
+    height: 10px;
+}
+
+.skeleton-images {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.skeleton-image {
+    aspect-ratio: 4/3;
+    border-radius: 7px;
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.03) 25%,
+            rgba(255, 255, 255, 0.07) 50%,
+            rgba(255, 255, 255, 0.03) 75%);
+    background-size: 1400px 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.skeleton-answer {
+    padding: 0;
+}
+
+.sources-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* ══════════════════════════════════════
+   IMAGES GRID  (in Images tab)
+   ══════════════════════════════════════ */
+
+.images-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.images-grid-item {
+    position: relative;
+    aspect-ratio: 4/3;
+    background: rgba(255, 255, 255, 0.04);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 8px;
+    transition: transform 0.2s ease;
+}
+
+.images-grid-item:hover {
+    transform: scale(1.03);
+    z-index: 1;
+}
+
+.images-grid-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.images-grid-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    color: #fff;
+}
+
+.images-grid-item:hover .images-grid-overlay {
+    opacity: 1;
+}
+
+/* Lightbox */
+.lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(20px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    animation: fadeIn 0.2s ease;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background 0.15s;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.lightbox-content {
+    max-width: 90vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.lightbox-img {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.lightbox-caption {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.875rem;
+    text-align: center;
+    margin: 0;
+}
+
+.lightbox-source-link {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
+    text-decoration: underline;
+}
+
+/* ══════════════════════════════════════
+   STICKY INPUT BAR (Matches main column width)
+   ══════════════════════════════════════ */
+
+.sp-input-bar {
+    position: absolute;
+    bottom: 0px;
+    left: 0;
+    right: 0;
+    padding: 16px 24px 32px 24px;
+    background: linear-gradient(to top, #000000 70%, transparent);
+    z-index: 50;
+    pointer-events: none;
+    /* Let clicks pass through gradient */
+}
+
+.sp-input-form {
+    pointer-events: auto;
+    /* Re-enable clicks for the form itself */
+    width: 100%;
+    width: 100%;
+    max-width: 800px;
+    /* Match main content width */
+    margin: 0 auto;
+    /* Center the input bar if it sits in full width wrapper */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #202022;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 26px;
+    /* Pill shape */
+    padding: 0 12px 0 16px;
+    transition: border-color 0.2s, background 0.2s;
+    height: 52px;
+    /* Fixed height! Fixes fat box issue */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.sp-input-form:focus-within {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(50, 50, 55, 0.7);
+}
+
+.sp-input-attach {
+    width: 32px;
+    /* Reduced from 40px */
+    height: 32px;
+    /* Reduced from 40px */
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    /* Filled background */
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+}
+
+.sp-input-attach:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.sp-input-field {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1rem;
+    /* Reduced from 1.15rem */
+    font-weight: 400;
+    /* Regular weight */
+    padding: 0 8px;
+    /* Added internal padding */
+    min-width: 0;
+}
+
+.sp-input-field:focus {
+    outline: none;
+}
+
+.sp-input-field::placeholder {
+    color: var(--text-muted);
+}
+
+.sp-input-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* Maintained gap */
+    flex-shrink: 0;
+}
+
+.sp-query-row {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 32px;
+    margin-bottom: 28px;
+}
+
+.sp-query-bubble {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #ececec;
+    max-width: 100%;
+    line-height: 1.3;
+    word-break: break-word;
+    background: transparent;
+    padding: 0;
+}
+
+.sp-model-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 16px;
+    transition: background 0.2s, color 0.2s;
+    outline: none;
+}
+
+.sp-model-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    /* Matches Perplexity hover */
+    color: white;
+}
+
+.sp-voice-btn,
+.sp-submit-btn {
+    width: 32px;
+    /* Reduced from 40px */
+    height: 32px;
+    /* Reduced from 40px */
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sp-voice-btn {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.sp-voice-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.sp-submit-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.sp-submit-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.sp-submit-btn:hover:not(:disabled) {
+    background: #ffffff;
+}
+
+.sp-submit-btn:disabled {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(0, 0, 0, 0.5);
+    cursor: not-allowed;
+}
+
+/* ══════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+    .sp-sources-panel {
+        width: 280px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sp-layout {
+        padding: 0 16px;
+        flex-direction: column;
+    }
+
+    .sp-sources-panel {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        padding: 16px 0 0;
+        position: static;
+        max-height: none;
+    }
+
+    .sp-input-bar {
+        left: 0;
+        padding: 8px 16px 14px;
+    }
+
+    .images-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

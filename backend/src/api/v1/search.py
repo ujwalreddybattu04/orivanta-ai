@@ -2,23 +2,25 @@
 Search endpoints — POST /search (streaming SSE)
 """
 
+from pydantic import BaseModel
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
+from src.services.search_orchestrator import search_orchestrator
+
 router = APIRouter()
 
+class SearchRequest(BaseModel):
+    query: str
+    focus_mode: str = "all"
 
-@router.post("")
-async def search(query: str = "", focus_mode: str = "all", model: str = "gpt-4o"):
+@router.post("/stream")
+async def search_stream(request: SearchRequest):
     """Submit a search query and receive a streaming AI-generated answer with citations."""
-    # TODO: Implement search orchestrator pipeline
-    async def event_stream():
-        yield f'data: {{"type":"token","content":"Search endpoint ready. Query: {query}"}}\n\n'
-        yield 'data: {"type":"sources","items":[]}\n\n'
-        yield 'data: {"type":"done"}\n\n'
-
-    return StreamingResponse(event_stream(), media_type="text/event-stream")
-
+    return StreamingResponse(
+        search_orchestrator.stream_search(request.query, request.focus_mode),
+        media_type="text/event-stream"
+    )
 
 @router.post("/suggestions")
 async def search_suggestions(query: str = ""):

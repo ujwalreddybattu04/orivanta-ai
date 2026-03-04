@@ -33,12 +33,14 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
     GOOGLE_AI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
 
     # --- Web Search ---
     BRAVE_SEARCH_API_KEY: str = ""
     GOOGLE_SEARCH_API_KEY: str = ""
     GOOGLE_SEARCH_CX: str = ""
     BING_SEARCH_API_KEY: str = ""
+    TAVILY_API_KEY: str = ""
 
     # --- Rate Limiting ---
     RATE_LIMIT_PER_MINUTE: int = 30
