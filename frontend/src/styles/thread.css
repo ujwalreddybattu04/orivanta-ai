@@ -1,6 +1,6 @@
 /* =============================================================================
-   Orivanta AI — Search Answer Page — Reference Design Match
-   Matches the provided screenshot exactly in dark premium theme
+   Orivanta AI — Search Answer Page — Perplexity-Style Layout
+   Pure black theme. CSS Grid two-column layout.
    ============================================================================= */
 
 /* ══════════════════════════════════════
@@ -10,10 +10,9 @@
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.7);
+    outline: 2px solid rgba(255, 255, 255, 0.5);
     outline-offset: 2px;
     border-radius: 4px;
-    /* Default soft rounding for focus */
 }
 
 /* ══════════════════════════════════════
@@ -22,71 +21,115 @@ input:focus-visible {
 
 .sp-page {
     height: 100vh;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
-    padding-bottom: 0px;
     background-color: #000000;
     position: relative;
-    z-index: 10;
+    overflow: hidden;
 }
 
 /* ══════════════════════════════════════
-   TAB BAR — Lives inside sp-main, aligns with content
+   TWO-COLUMN LAYOUT — CSS Grid
+   ══════════════════════════════════════ */
+
+.sp-layout {
+    display: grid;
+    grid-template-columns: 1fr 0px;
+    /* Persistent second column for smooth transition */
+    height: 100%;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    /* Buttery smooth transition for the grid */
+    transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When sources panel is open */
+.sp-layout--panel-open {
+    grid-template-columns: 1fr 480px;
+}
+
+/* ══════════════════════════════════════
+   MAIN COLUMN
+   ══════════════════════════════════════ */
+
+.sp-main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ══════════════════════════════════════
+   TAB BAR — Sticky top inside main column
    ══════════════════════════════════════ */
 
 .sp-tabbar {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    padding: 16px 24px 0;
-    position: sticky;
-    top: 0;
-    z-index: 40;
+    padding: 0 0 0 0;
+    flex-shrink: 0;
     background: #000000;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 40;
 }
 
 .sp-tabs {
     display: flex;
     align-items: center;
     gap: 0;
+    /* Bulletproof mathematical alignment:
+       Matches a centered 848px column (424px half) that has 24px internal padding.
+       Formula: 50% - 424px + 24px = 50% - 400px */
+    padding-left: max(24px, calc(50% - 400px));
 }
 
 .sp-tab {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 12px 16px;
-    border-radius: 0;
+    gap: 7px;
+    padding: 14px 16px 12px;
     border: none;
     background: none;
-    color: rgba(255, 255, 255, 0.38);
-    font-size: 0.85rem;
-    font-weight: 450;
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 0.875rem;
+    font-weight: 400;
     font-family: inherit;
     cursor: pointer;
     transition: color 0.15s ease;
     position: relative;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
+    border-radius: 0;
+    letter-spacing: 0.01em;
+}
+
+.sp-tab svg {
+    opacity: 0.7;
 }
 
 .sp-tab:hover {
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(255, 255, 255, 0.78);
 }
 
 .sp-tab--active {
     color: rgba(255, 255, 255, 0.95);
     font-weight: 500;
-    border-bottom-color: rgba(255, 255, 255, 0.9);
+    border-bottom-color: rgba(255, 255, 255, 0.88);
+}
+
+.sp-tab--active svg {
+    opacity: 1;
 }
 
 .sp-tabbar-right {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding-right: 4px;
+    gap: 6px;
+    padding: 10px 24px 10px;
 }
 
 .sp-more-btn {
@@ -111,13 +154,13 @@ input:focus-visible {
 .sp-share-btn {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
     background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.55);
-    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.815rem;
     font-weight: 500;
     font-family: inherit;
     cursor: pointer;
@@ -126,104 +169,111 @@ input:focus-visible {
 
 .sp-share-btn:hover {
     background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
 /* ══════════════════════════════════════
-   TWO-COLUMN LAYOUT
+   CONTENT AREA — Scrollable
    ══════════════════════════════════════ */
 
-.sp-layout {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    height: 100vh;
-    padding: 0 16px;
-    gap: 28px;
-    position: relative;
-    max-width: 1080px;
-    /* Compress the overall layout bounds for tighter grouping */
-    margin: 0 auto;
-}
-
-.sp-layout--panel-open {
-    justify-content: center;
-    gap: 28px;
-}
-
-/* ══════════════════════════════════════
-   MAIN COLUMN 
-   ══════════════════════════════════════ */
-
-.sp-main {
-    flex: 1;
-    min-width: 0;
-    width: 100%;
-    max-width: 720px;
-    /* Restrict Answer width to simulate textbook width */
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    padding-top: 32px;
-    transition: margin 0.3s ease;
-    position: relative;
-}
-
-/* Content area below the tab bar */
 .sp-content {
-    padding: 28px 24px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     scrollbar-width: none;
-    /* Hide scrollbar for a cleaner look */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .sp-content::-webkit-scrollbar {
     display: none;
 }
 
+/* Inner wrapper — constrains content width like Perplexity */
+.sp-content-inner {
+    width: 100%;
+    max-width: 848px;
+    /* 800px content + 24px padding on each side */
+    padding: 32px 24px 140px;
+    /* 24px padding ensures text never hits the edge on mobile */
+    box-sizing: border-box;
+    margin: 0 auto;
+    flex-shrink: 0;
+}
+
+/* Fallback: if sp-content-inner is not used, direct children padding */
+.sp-content>*:not(.sp-content-inner) {
+    width: 100%;
+    max-width: calc(800px + 2 * 24px);
+    /* 800px content + 24px padding on each side */
+    padding-left: 24px;
+    padding-right: 24px;
+    box-sizing: border-box;
+    align-self: center;
+}
+
 /* ══════════════════════════════════════
-   USER QUERY BUBBLE (Right Aligned)
+   USER QUERY — Chat Bubble Style
    ══════════════════════════════════════ */
 
 .sp-query-row {
     display: flex;
-    justify-content: flex-start;
+    justify-content: flex-end;
+    margin-top: 12px;
     margin-bottom: 32px;
-    margin-top: 16px;
     width: 100%;
+    max-width: 90%;
+    /* Match .sp-answer-body to prevent boundary overflow */
 }
 
 .sp-query-bubble {
-    font-size: 2.2rem;
-    font-weight: 600;
+    font-size: 1.05rem;
+    font-weight: 400;
     color: #ffffff;
-    max-width: 100%;
-    line-height: 1.3;
+    background: #2a2a2f;
+    padding: 12px 20px;
+    border-radius: 20px;
+    border-bottom-right-radius: 4px;
+    max-width: 85%;
+    line-height: 1.5;
     word-break: break-word;
-    background: transparent;
-    padding: 0;
-    border: none;
 }
 
 /* ══════════════════════════════════════
-   ANSWER BODY — clean typography
+   STEPS COMPLETED LABEL
+   ══════════════════════════════════════ */
+
+.sp-steps-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 16px;
+    cursor: pointer;
+}
+
+.sp-steps-label:hover {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* ══════════════════════════════════════
+   ANSWER BODY — Clean typography like Perplexity
    ══════════════════════════════════════ */
 
 .sp-answer-body {
     color: rgba(255, 255, 255, 0.88);
-    font-size: 1.05rem;
-    /* Larger font size for better readability */
-    line-height: 1.85;
-    /* Better line height */
-    margin-bottom: 20px;
+    font-size: 1rem;
+    line-height: 1.75;
+    margin-bottom: 8px;
+    width: 100%;
+    max-width: 90%;
+    /* Perplexity doesn't let text touch the far right edge */
 }
 
-/* Override AnswerStream card styling — answer just flows as text */
+/* Override AnswerStream card styling — answer flows as plain text */
 .sp-answer-body .answer-stream {
     background: none;
     border: none;
@@ -236,15 +286,15 @@ input:focus-visible {
 
 .sp-answer-body .answer-stream-content {
     padding: 0;
-    line-height: 1.8;
-    font-size: 0.96rem;
+    line-height: 1.75;
+    font-size: 1rem;
     color: rgba(255, 255, 255, 0.88);
 }
 
 /* Paragraph */
 .answer-paragraph {
-    margin: 0 0 16px;
-    line-height: 1.8;
+    margin: 0 0 14px;
+    line-height: 1.75;
 }
 
 .answer-paragraph:last-child {
@@ -253,26 +303,27 @@ input:focus-visible {
 
 /* Headings in answer */
 .answer-h2 {
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: #ffffff;
-    margin: 22px 0 9px;
+    margin: 22px 0 10px;
     padding: 0;
     border: none;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
 }
 
 .answer-h3 {
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-size: 0.975rem;
+    font-weight: 600;
     color: #ffffff;
-    margin: 18px 0 7px;
+    margin: 18px 0 8px;
+    letter-spacing: -0.01em;
 }
 
 /* Lists */
 .answer-list {
-    padding-left: 18px;
-    margin: 4px 0 14px;
+    padding-left: 22px;
+    margin: 6px 0 14px;
 }
 
 .answer-list-ordered {
@@ -280,18 +331,22 @@ input:focus-visible {
 }
 
 .answer-list-item {
-    margin-bottom: 7px;
+    margin-bottom: 8px;
     line-height: 1.7;
     color: rgba(255, 255, 255, 0.84);
 }
 
+.answer-list-item:last-child {
+    margin-bottom: 0;
+}
+
 .answer-bold {
-    font-weight: 700;
+    font-weight: 600;
     color: #ffffff;
 }
 
 .answer-link {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.65);
     text-decoration: underline;
     text-underline-offset: 3px;
     transition: color 0.15s;
@@ -307,34 +362,62 @@ input:focus-visible {
     border-radius: 4px;
     padding: 1px 6px;
     font-size: 0.875em;
-    font-family: "Fira Code", monospace;
+    font-family: "Fira Code", "Consolas", monospace;
 }
 
-
 .answer-code-block {
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     padding: 16px;
     margin: 14px 0;
     overflow-x: auto;
-    font-family: "Fira Code", monospace;
+    font-family: "Fira Code", "Consolas", monospace;
     font-size: 0.875rem;
     line-height: 1.6;
 }
 
-/* ── Citation badges — inline, like Perplexity's 'ibm +1' pills ── */
+/* ── Citation pills — inline Perplexity-style domain pills ── */
+/* These appear inline in text after sentences/snippets */
+.citation-pill {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 6px;
+    margin: 0 2px;
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+    vertical-align: baseline;
+    transition: background 0.15s;
+    line-height: 1.4;
+    white-space: nowrap;
+    position: relative;
+    top: -1px;
+}
+
+.citation-pill:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.citation-pill-domain {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.65);
+    letter-spacing: 0.1px;
+}
+
 .citation-badge-rendered {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    padding: 1px 6px;
+    gap: 4px;
+    padding: 1px 7px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.09);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.11);
     font-size: 0.7rem;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.6);
     vertical-align: middle;
     margin: 0 2px;
     cursor: pointer;
@@ -345,9 +428,9 @@ input:focus-visible {
 }
 
 .citation-badge-rendered:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.22);
-    color: rgba(255, 255, 255, 0.88);
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Streaming cursor */
@@ -371,7 +454,7 @@ input:focus-visible {
 }
 
 /* ══════════════════════════════════════
-   BOTTOM ACTION ROW
+   ACTION ROW — Below answer
    ══════════════════════════════════════ */
 
 .sp-action-row {
@@ -379,10 +462,10 @@ input:focus-visible {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    padding: 12px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    margin-bottom: 24px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    margin-top: 4px;
+    margin-bottom: 28px;
 }
 
 .sp-action-left,
@@ -401,44 +484,55 @@ input:focus-visible {
     border: none;
     background: none;
     color: rgba(255, 255, 255, 0.35);
-    border-radius: 7px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .sp-icon-btn:hover {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
     background: rgba(255, 255, 255, 0.06);
 }
 
+/* Sources badge pill — shown when panel is closed */
 .sp-sources-badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
+    padding: 5px 12px;
     border-radius: 20px;
-    /* Fully rounded pill shape like Perplexity */
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.04);
     color: rgba(255, 255, 255, 0.6);
     cursor: pointer;
     transition: all 0.15s ease;
     margin-left: 4px;
+    font-family: inherit;
 }
 
 .sp-sources-badge:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.18);
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.sp-sources-badge--hidden {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+    width: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+    overflow: hidden;
 }
 
 .sp-sources-badge--active {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
 }
 
-/* Overlapping Favicon Cluster */
 .sp-sources-badge-icons {
     display: flex;
     align-items: center;
@@ -453,11 +547,9 @@ input:focus-visible {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #000;
-    border: 1px solid #222;
-    /* Creates definition between overlapping icons */
-    margin-right: -6px;
-    /* Core overlap mechanic */
+    background: #111;
+    border: 1.5px solid #000;
+    margin-right: -5px;
 }
 
 .sp-sources-badge-icon-wrapper:last-child {
@@ -490,42 +582,45 @@ input:focus-visible {
 }
 
 /* ══════════════════════════════════════
-   FOLLOW-UPS  (↳ arrows)
+   FOLLOW-UPS — Perplexity-style arrow list
    ══════════════════════════════════════ */
 
 .sp-followups {
-    margin-bottom: 24px;
+    margin-bottom: 32px;
     animation: fadeInUp 0.3s ease;
 }
 
 .sp-followups-title {
-    font-size: 0.82rem;
+    font-size: 0.88rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.38);
-    letter-spacing: 0.02em;
-    margin-bottom: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    margin-bottom: 8px;
 }
 
 .sp-followups-list {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 0;
 }
 
 .sp-followup-item {
     display: flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 8px 0;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
     border: none;
     background: none;
-    color: rgba(255, 255, 255, 0.65);
+    color: rgba(255, 255, 255, 0.68);
     font-size: 0.9rem;
     font-family: inherit;
     text-align: left;
     cursor: pointer;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     transition: color 0.15s ease;
+    width: 100%;
 }
 
 .sp-followup-item:last-child {
@@ -548,7 +643,7 @@ input:focus-visible {
 }
 
 /* ══════════════════════════════════════
-   LINKS TAB / IMAGES TAB
+   LINKS TAB
    ══════════════════════════════════════ */
 
 .sp-links-tab {
@@ -558,65 +653,54 @@ input:focus-visible {
 .sp-links-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .sp-link-item {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    padding: 12px;
+    padding: 12px 14px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.07);
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.02);
     text-decoration: none;
     transition: all 0.15s ease;
 }
 
 .sp-link-item:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.12);
 }
 
-.sp-link-num {
+.sp-link-favicon {
     flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
-    background: rgba(255, 255, 255, 0.08);
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.5);
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 1px;
+    overflow: hidden;
+    margin-top: 2px;
 }
 
-.citation-pill {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.08);
-    /* Matches Perplexity pill background */
-    padding: 0 4px;
-    margin: 0 4px;
-    border-radius: 4px;
-    text-decoration: none;
-    cursor: pointer;
-    vertical-align: text-bottom;
-    transition: background 0.2s;
+.sp-link-favicon img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
 }
 
-.citation-pill:hover {
-    background: rgba(255, 255, 255, 0.15);
+.sp-link-icon-letter {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
 }
 
-.citation-pill-domain {
-    font-size: 0.6rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
-    /* Slightly dimmed text inside pill */
-    letter-spacing: 0.2px;
+.sp-link-content {
+    flex: 1;
+    min-width: 0;
 }
 
 .sp-link-domain {
@@ -627,7 +711,6 @@ input:focus-visible {
 
 .sp-link-title {
     font-size: 0.95rem;
-    /* Increased text hierarchy */
     font-weight: 500;
     color: rgba(255, 255, 255, 0.82);
     line-height: 1.3;
@@ -635,9 +718,8 @@ input:focus-visible {
 }
 
 .sp-link-snippet {
-    font-size: 0.85rem;
-    /* Better readability */
-    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.38);
     line-height: 1.45;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -645,6 +727,10 @@ input:focus-visible {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+/* ══════════════════════════════════════
+   IMAGES TAB
+   ══════════════════════════════════════ */
 
 .sp-images-tab {
     padding: 16px 0;
@@ -656,10 +742,6 @@ input:focus-visible {
     color: rgba(255, 255, 255, 0.3);
     font-size: 0.875rem;
 }
-
-/* ══════════════════════════════════════
-   IMAGES TAB EMPTY / SKELETON
-   ══════════════════════════════════════ */
 
 .sp-images-empty-container {
     display: flex;
@@ -685,7 +767,7 @@ input:focus-visible {
 .sp-images-skeleton-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
 }
 
 .sp-skeleton-image-box {
@@ -707,31 +789,27 @@ input:focus-visible {
 }
 
 /* ══════════════════════════════════════
-   RIGHT SOURCES PANEL
+   RIGHT SOURCES PANEL — Perplexity style
    ══════════════════════════════════════ */
 
 .sp-sources-panel {
-    width: 320px;
-    flex-shrink: 0;
-    border-left: 1px solid rgba(255, 255, 255, 0.05);
-    /* Softer divider */
-    padding: 16px 0 24px 28px;
-    /* Tighter left padding flush against boundary */
-    /* Matches main column Y-start below header */
-    height: calc(100vh - 64px);
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-    position: sticky;
-    top: 0;
-    align-self: flex-start;
-    animation: slideInRight 0.22s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 480px;
+    /* Fixed width prevents content squishing during transition */
+    min-width: 480px;
+    border-left: 1px solid rgba(255, 255, 255, 0.07);
+    background: #000000;
+    overflow: hidden;
+    /* Slide in gracefully with the grid */
+    transition: opacity 0.3s ease;
 }
 
 @keyframes slideInRight {
     from {
         opacity: 0;
-        transform: translateX(12px);
+        transform: translateX(8px);
     }
 
     to {
@@ -740,24 +818,34 @@ input:focus-visible {
     }
 }
 
+/* Sticky header inside sources panel */
 .sp-sources-panel-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    margin-bottom: 4px;
+    padding: 20px 20px 14px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    background: #000000;
 }
 
 .sp-sources-panel-title {
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #ffffff;
-    margin: 0 0 3px;
+    margin: 0 0 2px;
+    letter-spacing: -0.01em;
 }
 
 .sp-sources-panel-subtitle {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.35);
-    margin: 0 0 16px;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.32);
+    margin: 0;
+    line-height: 1.4;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .sp-sources-panel-close {
@@ -766,14 +854,15 @@ input:focus-visible {
     border-radius: 6px;
     border: none;
     background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.4);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
     transition: all 0.15s;
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
 .sp-sources-panel-close:hover {
@@ -781,65 +870,139 @@ input:focus-visible {
     color: rgba(255, 255, 255, 0.85);
 }
 
+/* Scrollable sources list */
 .sp-sources-panel-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px 12px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.07) transparent;
+}
+
+.sp-sources-panel-list::-webkit-scrollbar {
+    width: 3px;
+}
+
+.sp-sources-panel-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sp-sources-panel-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 4px;
+}
+
+/* ══════════════════════════════════════
+   INDIVIDUAL SOURCE ITEM — Perplexity Style
+   ══════════════════════════════════════ */
+
+.sp-source-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 8px;
+    text-decoration: none;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    position: relative;
+    border-radius: 6px;
+}
+
+.sp-source-item:last-child {
+    border-bottom: none;
+}
+
+.sp-source-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Index number badge on the left - removed */
+
+/* Favicon/letter icon circle */
+.sp-source-item-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sp-source-item-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.sp-source-item-letter {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Body */
+.sp-source-item-body {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-.sp-source-item {
+.sp-source-item-domain-row {
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 8px;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: background 0.15s ease;
-    border: 1px solid transparent;
+    align-items: center;
+    margin-bottom: 2px;
 }
 
-.sp-source-item:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.07);
-}
-
-.sp-source-item-icon {
-    width: 24px;
-    height: 24px;
+.sp-source-small-favicon {
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
+    object-fit: cover;
+}
+
+.sp-source-favicon-fallback {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    margin-top: 1px;
-    overflow: hidden;
-}
-
-.sp-source-item-letter {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.55);
-}
-
-.sp-source-item-body {
-    flex: 1;
-    min-width: 0;
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .sp-source-item-domain {
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 500;
     color: rgba(255, 255, 255, 0.45);
-    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sp-source-item:hover .sp-source-item-domain {
+    color: rgba(100, 190, 255, 0.9);
 }
 
 .sp-source-item-title {
-    font-size: 0.8rem;
+    font-size: 0.835rem;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.82);
     line-height: 1.35;
-    margin-bottom: 3px;
+    margin-bottom: 5px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -848,9 +1011,9 @@ input:focus-visible {
 }
 
 .sp-source-item-snippet {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.32);
-    line-height: 1.45;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    line-height: 1.5;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     line-clamp: 3;
@@ -858,33 +1021,42 @@ input:focus-visible {
     overflow: hidden;
 }
 
+/* Sources panel empty placeholder */
+.sp-sources-empty {
+    padding: 32px 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.22);
+    font-size: 0.82rem;
+    line-height: 1.6;
+}
+
 /* ══════════════════════════════════════
    ERROR STATE
    ══════════════════════════════════════ */
 
 .sp-error {
-    text-align: center;
-    padding: 52px 32px;
+    padding: 28px 24px;
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.018);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
     margin-bottom: 24px;
+    text-align: left;
 }
 
 .sp-error-icon {
-    font-size: 2rem;
-    margin-bottom: 12px;
+    font-size: 1.6rem;
+    margin-bottom: 10px;
 }
 
 .sp-error-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: #ffffff;
     margin: 0 0 8px;
 }
 
 .sp-error-msg {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.42);
     line-height: 1.6;
     margin: 0;
@@ -1028,7 +1200,7 @@ input:focus-visible {
 }
 
 /* ══════════════════════════════════════
-   IMAGES GRID  (in Images tab)
+   IMAGES GRID (in Images tab)
    ══════════════════════════════════════ */
 
 .images-grid {
@@ -1144,59 +1316,47 @@ input:focus-visible {
 }
 
 /* ══════════════════════════════════════
-   STICKY INPUT BAR (Matches main column width)
+   STICKY INPUT BAR — Fixed to bottom of main column
    ══════════════════════════════════════ */
 
 .sp-input-bar {
-    position: absolute;
-    bottom: 0px;
-    left: 0;
-    right: 0;
-    padding: 16px 24px 32px 24px;
-    background: linear-gradient(to top, #000000 70%, transparent);
+    flex-shrink: 0;
+    /* Alignment Formula: matches tabs/content at 50% - 400px */
+    padding: 12px 24px 24px max(24px, calc(50% - 400px));
+    background: #000000;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     z-index: 50;
-    pointer-events: none;
-    /* Let clicks pass through gradient */
+    display: flex;
+    justify-content: flex-start;
 }
 
 .sp-input-form {
-    pointer-events: auto;
-    /* Re-enable clicks for the form itself */
     width: 100%;
-    width: 100%;
-    max-width: 800px;
-    /* Match main content width */
-    margin: 0 auto;
-    /* Center the input bar if it sits in full width wrapper */
+    max-width: 720px;
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #202022;
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: #141414;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 26px;
-    /* Pill shape */
     padding: 0 12px 0 16px;
     transition: border-color 0.2s, background 0.2s;
-    height: 52px;
-    /* Fixed height! Fixes fat box issue */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    height: 50px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .sp-input-form:focus-within {
-    border-color: rgba(255, 255, 255, 0.15);
-    background: rgba(50, 50, 55, 0.7);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(30, 30, 30, 0.9);
 }
 
 .sp-input-attach {
-    width: 32px;
-    /* Reduced from 40px */
-    height: 32px;
-    /* Reduced from 40px */
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     border: none;
-    background: rgba(255, 255, 255, 0.08);
-    /* Filled background */
-    color: #ffffff;
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.6);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1207,20 +1367,19 @@ input:focus-visible {
 
 .sp-input-attach:hover {
     background: rgba(255, 255, 255, 0.12);
+    color: white;
 }
 
 .sp-input-field {
     flex: 1;
     background: transparent;
     border: none;
-    color: var(--text-primary);
-    font-size: 1rem;
-    /* Reduced from 1.15rem */
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
     font-weight: 400;
-    /* Regular weight */
     padding: 0 8px;
-    /* Added internal padding */
     min-width: 0;
+    font-family: inherit;
 }
 
 .sp-input-field:focus {
@@ -1228,63 +1387,47 @@ input:focus-visible {
 }
 
 .sp-input-field::placeholder {
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.28);
 }
 
 .sp-input-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
-    /* Maintained gap */
+    gap: 6px;
     flex-shrink: 0;
-}
-
-.sp-query-row {
-    display: flex;
-    justify-content: flex-start;
-    margin-top: 32px;
-    margin-bottom: 28px;
-}
-
-.sp-query-bubble {
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: #ececec;
-    max-width: 100%;
-    line-height: 1.3;
-    word-break: break-word;
-    background: transparent;
-    padding: 0;
 }
 
 .sp-model-btn {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.65);
-    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.48);
+    font-size: 0.86rem;
     font-weight: 500;
     cursor: pointer;
     padding: 6px 10px;
     border-radius: 16px;
     transition: background 0.2s, color 0.2s;
     outline: none;
+    font-family: inherit;
 }
 
 .sp-model-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    /* Matches Perplexity hover */
+    background: rgba(255, 255, 255, 0.07);
     color: white;
+}
+
+.sp-model-arrow {
+    font-size: 0.7rem;
+    opacity: 0.6;
 }
 
 .sp-voice-btn,
 .sp-submit-btn {
-    width: 32px;
-    /* Reduced from 40px */
-    height: 32px;
-    /* Reduced from 40px */
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     border: none;
     display: flex;
@@ -1296,7 +1439,7 @@ input:focus-visible {
 
 .sp-voice-btn {
     background: transparent;
-    color: rgba(255, 255, 255, 0.65);
+    color: rgba(255, 255, 255, 0.48);
 }
 
 .sp-voice-btn:hover {
@@ -1305,22 +1448,23 @@ input:focus-visible {
 }
 
 .sp-submit-btn {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.1);
     color: white;
 }
 
 .sp-submit-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 15px;
+    height: 15px;
 }
 
 .sp-submit-btn:hover:not(:disabled) {
     background: #ffffff;
+    color: #000000;
 }
 
 .sp-submit-btn:disabled {
-    background: rgba(255, 255, 255, 0.2);
-    color: rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.18);
     cursor: not-allowed;
 }
 
@@ -1354,33 +1498,44 @@ input:focus-visible {
    RESPONSIVE
    ══════════════════════════════════════ */
 
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
+
+    .sp-layout,
+    .sp-layout--panel-open {
+        grid-template-columns: 1fr;
+    }
+
     .sp-sources-panel {
-        width: 280px;
+        display: none;
     }
 }
 
 @media (max-width: 768px) {
-    .sp-layout {
-        padding: 0 16px;
-        flex-direction: column;
+    .sp-tabs {
+        padding-left: 16px;
     }
 
-    .sp-sources-panel {
-        width: 100%;
-        border-left: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.07);
-        padding: 16px 0 0;
-        position: static;
-        max-height: none;
+    .sp-tabbar-right {
+        padding: 10px 16px;
+    }
+
+    .sp-content-inner {
+        padding: 20px 16px 120px;
     }
 
     .sp-input-bar {
-        left: 0;
-        padding: 8px 16px 14px;
+        padding: 10px 16px 20px;
     }
 
     .images-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .skeleton-sources {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .sp-query-bubble {
+        font-size: 1.25rem;
     }
 }

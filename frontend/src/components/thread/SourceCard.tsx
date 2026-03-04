@@ -25,22 +25,18 @@ export default function SourceCard({ index, title, url, domain, faviconUrl, snip
                 <div className="source-card-content">
                     {/* Header: favicon + domain */}
                     <div className="source-card-header">
-                        {faviconUrl ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                                src={faviconUrl}
-                                alt=""
-                                className="source-card-favicon"
-                                width={14}
-                                height={14}
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = "none";
-                                }}
-                            />
-                        ) : (
-                            <div className="source-card-favicon-placeholder">
-                                {domain[0]?.toUpperCase() || "?"}
+                        {faviconUrl || domain ? (
+                            <div className="source-card-icon-img">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={faviconUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+                                    alt=""
+                                    width={16}
+                                    height={16}
+                                />
                             </div>
+                        ) : (
+                            <div className="source-card-letter">{domain ? domain[0].toUpperCase() : "?"}</div>
                         )}
                         <span className="source-card-domain">{domain}</span>
                         <svg

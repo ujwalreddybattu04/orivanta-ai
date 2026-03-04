@@ -14,7 +14,7 @@ function SearchPageContent() {
     const focusMode = searchParams.get("focus") || "all";
     const [followUp, setFollowUp] = useState("");
     const [activeTab, setActiveTab] = useState<"answer" | "links" | "images">("answer");
-    const [sourcesPanelOpen, setSourcesPanelOpen] = useState(true); // Default to true based on user request layout
+    const [sourcesPanelOpen, setSourcesPanelOpen] = useState(true);
     const [copied, setCopied] = useState(false);
 
     const {
@@ -31,9 +31,7 @@ function SearchPageContent() {
     const handleFollowUp = useCallback((e: React.FormEvent) => {
         e.preventDefault();
         const queryText = followUp.trim();
-        if (!queryText || isConnecting || isStreaming) return; // Prevent double-send
-
-        // Immediately clear input and push route
+        if (!queryText || isConnecting || isStreaming) return;
         setFollowUp("");
         router.push(`/search?q=${encodeURIComponent(queryText)}&focus=${focusMode}`);
     }, [followUp, focusMode, router, isConnecting, isStreaming]);
@@ -49,15 +47,16 @@ function SearchPageContent() {
     }, [answer]);
 
     const isLoading = isConnecting && !answer && !error;
+    const hasSources = sources.length > 0;
 
     return (
         <div className="sp-page">
-            <div className={`sp-layout ${sourcesPanelOpen && sources.length > 0 ? "sp-layout--panel-open" : ""}`}>
+            <div className={`sp-layout ${sourcesPanelOpen ? "sp-layout--panel-open" : ""}`}>
 
-                {/* ─── Main column — tabs + content aligned together ─── */}
+                {/* ─── Main Column ─── */}
                 <div className="sp-main">
 
-                    {/* ── Tab bar INSIDE content column — aligns with answer text ── */}
+                    {/* Tab Bar */}
                     <div className="sp-tabbar">
                         <div className="sp-tabs" role="tablist" aria-label="Search views">
                             <button
@@ -105,63 +104,69 @@ function SearchPageContent() {
                         </div>
                     </div>
 
-                    {/* ── Content area ── */}
+                    {/* Scrollable Content Area */}
                     <div className="sp-content">
+                        <div className="sp-content-inner">
 
-                        {/* Query bubble — right-aligned within the same content column */}
-                        <div className="sp-query-row">
-                            <div className="sp-query-bubble">{query}</div>
-                        </div>
 
-                        {activeTab === "answer" && (
-                            <>
-                                {isLoading && <AnswerSkeleton />}
-
-                                {error && !isLoading && (
-                                    <div className="sp-error">
-                                        <div className="sp-error-icon">⚡</div>
-                                        <h2 className="sp-error-title">Backend not connected</h2>
-                                        <p className="sp-error-msg">
-                                            Start the backend at <code>http://localhost:8000</code> to see live AI answers.
-                                        </p>
+                            {/* === ANSWER TAB === */}
+                            {activeTab === "answer" && (
+                                <>
+                                    {/* Query heading — Perplexity only shows this in the Answer tab */}
+                                    <div className="sp-query-row">
+                                        <div className="sp-query-bubble">{query}</div>
                                     </div>
-                                )}
 
-                                {(answer || isStreaming) && (
-                                    <div className="sp-answer-body">
-                                        <AnswerStream
-                                            content={answer}
-                                            isStreaming={isStreaming}
-                                            sources={sources}
-                                            onCopy={handleCopy}
-                                        />
-                                    </div>
-                                )}
+                                    {isLoading && <AnswerSkeleton />}
 
-                                {/* Action row */}
-                                {(answer || sources.length > 0) && (
-                                    <div className="sp-action-row">
-                                        <div className="sp-action-left">
-                                            <button className="sp-icon-btn" onClick={handleCopy} title={copied ? "Copied!" : "Copy"}>
-                                                {copied ? (
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
-                                                ) : (
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>
-                                                )}
-                                            </button>
-                                            <button className="sp-icon-btn" title="Download">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
-                                            </button>
-                                            <button className="sp-icon-btn" title="Copy text">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
-                                            </button>
-                                            <button className="sp-icon-btn" title="Reload">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /></svg>
-                                            </button>
-                                            {sources.length > 0 && !sourcesPanelOpen && (
+                                    {error && !isLoading && (
+                                        <div className="sp-error">
+                                            <div className="sp-error-icon">⚡</div>
+                                            <h2 className="sp-error-title">{error.includes("fetch") ? "Backend not connected" : "Search Error"}</h2>
+                                            <p className="sp-error-msg">
+                                                {error.includes("fetch")
+                                                    ? <>Start the backend at <code>http://localhost:8000</code> to see live AI answers.</>
+                                                    : error
+                                                }
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {(answer || isStreaming) && (
+                                        <div className="sp-answer-body">
+                                            <AnswerStream
+                                                content={answer}
+                                                isStreaming={isStreaming}
+                                                sources={sources}
+                                                onCopy={handleCopy}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Action row */}
+                                    {(answer || hasSources) && (
+                                        <div className="sp-action-row">
+                                            <div className="sp-action-left">
+                                                <button className="sp-icon-btn" onClick={handleCopy} title={copied ? "Copied!" : "Copy"}>
+                                                    {copied ? (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                                                    ) : (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>
+                                                    )}
+                                                </button>
+                                                <button className="sp-icon-btn" title="Download">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+                                                </button>
+                                                <button className="sp-icon-btn" title="Copy text">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                                                </button>
+                                                <button className="sp-icon-btn" title="Reload">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /></svg>
+                                                </button>
+                                                {/* Sources badge pill — Integrated with sourcesPanelOpen state */}
                                                 <button
-                                                    className="sp-sources-badge"
-                                                    onClick={() => setSourcesPanelOpen(true)}
+                                                    className={`sp-sources-badge ${!hasSources ? "sp-sources-badge--hidden" : ""} ${sourcesPanelOpen ? "sp-sources-badge--active" : ""}`}
+                                                    onClick={() => setSourcesPanelOpen(!sourcesPanelOpen)}
                                                     id="sources-toggle-btn"
                                                     aria-expanded={sourcesPanelOpen}
                                                     aria-controls="sources-panel"
@@ -170,8 +175,9 @@ function SearchPageContent() {
                                                     <div className="sp-sources-badge-icons">
                                                         {sources.slice(0, 3).map((src, i) => (
                                                             <div key={i} className="sp-sources-badge-icon-wrapper" style={{ zIndex: 3 - i }}>
-                                                                {src.faviconUrl ? (
-                                                                    <img src={src.faviconUrl} alt="" width={16} height={16} />
+                                                                {src.faviconUrl || src.domain ? (
+                                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                                    <img src={src.faviconUrl || `https://www.google.com/s2/favicons?domain=${src.domain}&sz=128`} alt="" width={16} height={16} />
                                                                 ) : (
                                                                     <div className="sp-sources-badge-icon-letter">{(src.domain[0] || "?").toUpperCase()}</div>
                                                                 )}
@@ -180,90 +186,97 @@ function SearchPageContent() {
                                                     </div>
                                                     <span className="sp-sources-badge-text">{sources.length} sources</span>
                                                 </button>
-                                            )}
-                                        </div>
-                                        <div className="sp-action-right">
-                                            <button className="sp-icon-btn" title="Thumbs up">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" /></svg>
-                                            </button>
-                                            <button className="sp-icon-btn" title="Thumbs down">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 14V2" /><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" /></svg>
-                                            </button>
-                                            <button className="sp-icon-btn" title="More">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Follow-ups */}
-                                {!isStreaming && relatedQuestions.length > 0 && (
-                                    <div className="sp-followups">
-                                        <div className="sp-followups-title">Follow-ups</div>
-                                        <div className="sp-followups-list">
-                                            {relatedQuestions.map((q, i) => (
-                                                <button
-                                                    key={i}
-                                                    className="sp-followup-item"
-                                                    onClick={() => handleRelatedSelect(q)}
-                                                    id={`followup-${i}`}
-                                                >
-                                                    <span className="sp-followup-arrow">↳</span>
-                                                    <span className="sp-followup-text">{q}</span>
+                                            </div>
+                                            <div className="sp-action-right">
+                                                <button className="sp-icon-btn" title="Thumbs up">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" /></svg>
                                                 </button>
+                                                <button className="sp-icon-btn" title="Thumbs down">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 14V2" /><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" /></svg>
+                                                </button>
+                                                <button className="sp-icon-btn" title="More">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Follow-ups */}
+                                    {!isStreaming && relatedQuestions.length > 0 && (
+                                        <div className="sp-followups">
+                                            <div className="sp-followups-title">Follow-ups</div>
+                                            <div className="sp-followups-list">
+                                                {relatedQuestions.map((q, i) => (
+                                                    <button
+                                                        key={i}
+                                                        className="sp-followup-item"
+                                                        onClick={() => handleRelatedSelect(q)}
+                                                        id={`followup-${i}`}
+                                                    >
+                                                        <span className="sp-followup-arrow">↳</span>
+                                                        <span className="sp-followup-text">{q}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* === LINKS TAB === */}
+                            {activeTab === "links" && (
+                                <div className="sp-links-tab">
+                                    {sources.length === 0 ? (
+                                        <div className="sp-empty-tab">Links will appear here when the backend is connected.</div>
+                                    ) : (
+                                        <div className="sp-links-list">
+                                            {sources.map((src, i) => (
+                                                <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="sp-link-item">
+                                                    <div className="sp-link-favicon">
+                                                        {src.faviconUrl || src.domain ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img src={src.faviconUrl || `https://www.google.com/s2/favicons?domain=${src.domain}&sz=128`} alt="" width={16} height={16} />
+                                                        ) : (
+                                                            <div className="sp-link-icon-letter">{(src.domain[0] || "?").toUpperCase()}</div>
+                                                        )}
+                                                    </div>
+                                                    <div className="sp-link-content">
+                                                        <div className="sp-link-domain">{src.domain}</div>
+                                                        <div className="sp-link-title">{src.title}</div>
+                                                        {src.snippet && <div className="sp-link-snippet">{src.snippet}</div>}
+                                                    </div>
+                                                </a>
                                             ))}
                                         </div>
-                                    </div>
-                                )}
-                            </>
-                        )}
+                                    )}
+                                </div>
+                            )}
 
-                        {/* Links tab */}
-                        {activeTab === "links" && (
-                            <div className="sp-links-tab">
-                                {sources.length === 0 ? (
-                                    <div className="sp-empty-tab">Links will appear here when the backend is connected.</div>
-                                ) : (
-                                    <div className="sp-links-list">
-                                        {sources.map((src, i) => (
-                                            <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="sp-link-item">
-                                                <span className="sp-link-num">{i + 1}</span>
-                                                <div className="sp-link-content">
-                                                    <div className="sp-link-domain">{src.domain}</div>
-                                                    <div className="sp-link-title">{src.title}</div>
-                                                    {src.snippet && <div className="sp-link-snippet">{src.snippet}</div>}
-                                                </div>
-                                            </a>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Images tab */}
-                        {activeTab === "images" && (
-                            <div className="sp-images-tab">
-                                {images.length === 0 ? (
-                                    <div className="sp-images-empty-container">
-                                        <div className="sp-empty-tab sp-empty-images-msg">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
-                                            <p>Images will appear here when the backend is connected.</p>
+                            {/* === IMAGES TAB === */}
+                            {activeTab === "images" && (
+                                <div className="sp-images-tab">
+                                    {images.length === 0 ? (
+                                        <div className="sp-images-empty-container">
+                                            <div className="sp-empty-tab sp-empty-images-msg">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+                                                <p>Images will appear here when the backend is connected.</p>
+                                            </div>
+                                            <div className="sp-images-skeleton-grid">
+                                                <div className="sp-skeleton-image-box"></div>
+                                                <div className="sp-skeleton-image-box"></div>
+                                                <div className="sp-skeleton-image-box"></div>
+                                                <div className="sp-skeleton-image-box"></div>
+                                            </div>
                                         </div>
-                                        <div className="sp-images-skeleton-grid">
-                                            <div className="sp-skeleton-image-box"></div>
-                                            <div className="sp-skeleton-image-box"></div>
-                                            <div className="sp-skeleton-image-box"></div>
-                                            <div className="sp-skeleton-image-box"></div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <ImagesGrid images={images} />
-                                )}
-                            </div>
-                        )}
-                    </div> {/* End of sp-content */}
+                                    ) : (
+                                        <ImagesGrid images={images} />
+                                    )}
+                                </div>
+                            )}
+                        </div>{/* end sp-content-inner */}
+                    </div>
 
-                    {/* ─── Sticky input bar (inside main column for perfect alignment) ─── */}
+                    {/* Sticky Input Bar — at bottom of main column */}
                     <div className="sp-input-bar">
                         <form className="sp-input-form" onSubmit={handleFollowUp}>
                             <button type="button" className="sp-input-attach" aria-label="Attach">
@@ -275,6 +288,9 @@ function SearchPageContent() {
                                 placeholder="Ask a follow-up"
                                 value={followUp}
                                 onChange={e => setFollowUp(e.target.value)}
+                                autoComplete="off"
+                                autoCorrect="off"
+                                spellCheck={false}
                                 id="follow-up-input"
                             />
                             <div className="sp-input-actions">
@@ -289,47 +305,53 @@ function SearchPageContent() {
                                 </button>
                             </div>
                         </form>
-                    </div> {/* End of sp-input-bar */}
-                </div> {/* End of sp-main */}
+                    </div>
+                </div>
 
-                {/* ─── Right Sources Panel ─── */}
-                {sourcesPanelOpen && sources.length > 0 && (
-                    <aside className="sp-sources-panel" id="sources-panel">
-                        <div className="sp-sources-panel-header">
-                            <div>
-                                <h3 className="sp-sources-panel-title">{sources.length} sources</h3>
-                                <p className="sp-sources-panel-subtitle">Sources for {query}</p>
-                            </div>
-                            <button
-                                className="sp-sources-panel-close"
-                                onClick={() => setSourcesPanelOpen(false)}
-                                aria-label="Close sources panel"
-                                aria-expanded="true"
-                                aria-controls="sources-panel"
-                            >✕</button>
+                {/* ─── Right Sources Panel — Always rendered to allow smooth CSS transitions ─── */}
+                <aside className="sp-sources-panel" id="sources-panel">
+                    <div className="sp-sources-panel-header">
+                        <div>
+                            <h3 className="sp-sources-panel-title">
+                                {hasSources ? (sources.length >= 5 ? `${sources.length} sources` : "Sources") : "Sources"}
+                            </h3>
                         </div>
+                        <button
+                            className="sp-sources-panel-close"
+                            onClick={() => setSourcesPanelOpen(false)}
+                            aria-label="Close sources panel"
+                        >✕</button>
+                    </div>
+
+                    {hasSources ? (
                         <div className="sp-sources-panel-list">
                             {sources.map((src, i) => (
                                 <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="sp-source-item" id={`source-item-${i + 1}`}>
                                     <div className="sp-source-item-icon">
-                                        {src.faviconUrl ? (
+                                        {src.faviconUrl || src.domain ? (
                                             // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={src.faviconUrl} alt="" width={16} height={16} style={{ borderRadius: "50%" }}
+                                            <img src={src.faviconUrl || `https://www.google.com/s2/favicons?domain=${src.domain}&sz=128`} alt="" width={24} height={24} style={{ borderRadius: "50%" }}
                                                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                                         ) : (
                                             <div className="sp-source-item-letter">{(src.domain[0] || "?").toUpperCase()}</div>
                                         )}
                                     </div>
                                     <div className="sp-source-item-body">
-                                        <div className="sp-source-item-domain">{src.domain}</div>
+                                        <div className="sp-source-item-domain-row">
+                                            <div className="sp-source-item-domain">{src.domain}</div>
+                                        </div>
                                         <div className="sp-source-item-title">{src.title}</div>
                                         {src.snippet && <div className="sp-source-item-snippet">{src.snippet}</div>}
                                     </div>
                                 </a>
                             ))}
                         </div>
-                    </aside>
-                )}
+                    ) : (
+                        <div className="sp-sources-empty">
+                            {isLoading ? "Finding top sources..." : "No sources available. Start the backend to see sources."}
+                        </div>
+                    )}
+                </aside>
             </div>
         </div>
     );
@@ -381,7 +403,7 @@ function SearchPageSkeleton() {
                             <p className="sp-sources-panel-subtitle">Loading...</p>
                         </div>
                     </div>
-                    <div style={{ padding: "0 24px", color: "rgba(255,255,255,0.4)" }}>Finding top sources...</div>
+                    <div className="sp-sources-empty">Finding top sources...</div>
                 </aside>
             </div>
         </div>

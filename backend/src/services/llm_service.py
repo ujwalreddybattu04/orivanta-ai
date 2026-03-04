@@ -16,7 +16,7 @@ class GroqLLMService:
         else:
             self.client = AsyncGroq(api_key=self.api_key)
             
-        self.default_model = "llama-3.3-70b-versatile"
+        self.default_model = "llama-3.1-8b-instant"
 
     def _build_system_prompt(self, context_results: List[Dict[str, Any]]) -> str:
         """Constructs the system prompt with context from search results."""

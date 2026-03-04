@@ -8,18 +8,12 @@ interface AnswerStreamProps {
     content: string;
     isStreaming: boolean;
     sources: SearchSource[];
-}
-
-interface AnswerStreamProps {
-    content: string;
-    isStreaming: boolean;
-    sources: SearchSource[];
     onCopy?: () => void;
 }
 
 export default function AnswerStream({ content, isStreaming, sources, onCopy }: AnswerStreamProps) {
-    // Convert generic [1] citations into standard markdown links pointed to a fake index route [1](1)
-    // This allows ReactMarkdown to safely parse them into 'a' tags which we can intercept below. 
+    // Convert generic [1] citations into markdown links [1](1)
+    // ReactMarkdown parses them into 'a' tags which we intercept below
     const processedContent = content.replace(/\[(\d+)\]/g, '[$1]($1)');
 
     const handleCopy = () => {
@@ -61,19 +55,11 @@ export default function AnswerStream({ content, isStreaming, sources, onCopy }: 
                 </div>
             </div>
 
-            {/* Markdown content with citations */}
-            <div
-                className="answer-stream-content"
-                dangerouslySetInnerHTML={{ __html: "" }}
-            >
-                {/* We render via ReactMarkdown below, with citation post-processing */}
-            </div>
-
+            {/* Markdown content with inline citations */}
             <div className="answer-stream-content">
                 <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                        // Render inline citations inside paragraph text
                         p: ({ children }) => (
                             <p className="answer-paragraph">{children}</p>
                         ),
@@ -103,7 +89,7 @@ export default function AnswerStream({ content, isStreaming, sources, onCopy }: 
                             <strong className="answer-bold">{children}</strong>
                         ),
                         a: ({ href, children }) => {
-                            // Intercept our fake [1](1) citation links
+                            // Intercept fake [1](1) citation links
                             if (href && !isNaN(Number(href))) {
                                 const index = parseInt(href, 10);
                                 const realSource = sources[index - 1];
@@ -122,7 +108,7 @@ export default function AnswerStream({ content, isStreaming, sources, onCopy }: 
                                     </a>
                                 );
                             }
-                            return <a href={href} className="answer-link" target="_blank" rel="noopener noreferrer">{children}</a>
+                            return <a href={href} className="answer-link" target="_blank" rel="noopener noreferrer">{children}</a>;
                         },
                     }}
                 >

@@ -46,6 +46,10 @@ export default function SearchBar() {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         autoFocus
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck={false}
                         id="search-input"
                     />
                 </div>
