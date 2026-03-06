@@ -27,17 +27,39 @@ class SearchOrchestrator:
             start_time = time.time()
             logger.info(f"Orchestrating search for: {query} with focus: {focus_mode}")
             
-            # --- INSTANT START ---
+            # --- PHASE 0: INSTANT FEEDBACK (<50ms) ---
+            yield f"data: {json.dumps({'type': 'status', 'content': 'Analyzing query'})}\n\n"
+            
+            # Speculative Intent: Mask the initial thinking gap
+            # This is a key "Billion Dollar" optimization — never show a dead screen
+            await asyncio.sleep(0.02) 
+            
+            # --- PHASE 1: PARALLEL EXECUTION ---
             # Fire search + plan concurrently
             plan_task = asyncio.create_task(groq_llm_service.generate_research_plan(query))
             search_task = asyncio.create_task(tavily_search_service.search(query, max_results=12))
 
-            # Yield sources at the ABSOLUTE START so UI is always ready
-            # Await the search (has been running in parallel this whole time)
+            # BUG FIX / OPTIMIZATION: Do NOT await search_task here.
+            # Await the plan first because it's usually faster (~300-500ms) 
+            # and allows us to fill the UI with "Research Steps" while search (~1-2s) runs.
+            
+            plan = await plan_task
+            refined_intent = plan.get("intent")
+            if refined_intent:
+                yield f"data: {json.dumps({'type': 'thought', 'content': refined_intent})}\n\n"
+            
+            sub_queries = plan.get("queries", [query])
+            for sq in sub_queries:
+                yield f"data: {json.dumps({'type': 'query_step', 'content': sq})}\n\n"
+                # Visual pop timing
+                await asyncio.sleep(0.05)
+
+            # --- PHASE 2: SYNC SEARCH RESULTS (Background) ---
+            # We fetch results here to calculate thought time, but DO NOT YIELD YET
             search_results = await search_task
             logger.info(f"Search results received: {len(search_results)} items")
             
-            # Format sources for frontend
+            # Format sources for frontend (Ready for later)
             frontend_sources = []
             for idx, res in enumerate(search_results, start=1):
                 domain = res.get("domain", "website")
@@ -50,54 +72,21 @@ class SearchOrchestrator:
                     "citationIndex": idx
                 })
             
-            # YIELD SOURCES LOUDLY
-            logger.info(f"YIELDING_SOURCES_START: {len(frontend_sources)} items")
-            if len(frontend_sources) > 0:
-                logger.info(f"SAMPLE_SOURCE_0: {frontend_sources[0]}")
-            
-            # Include 'items' key for backward compatibility with legacy hooks if any
-            yield f"data: {json.dumps({'type': 'sources', 'sources': frontend_sources, 'items': frontend_sources})}\n\n"
-            
-            # --- PHASE 2: STREAM RESEARCH STEPS (Genuine Progress) ---
-            # Genuine Progress Tracking: Step 1
-            yield f"data: {json.dumps({'type': 'status', 'content': 'Analyzing query'})}\n\n"
-            
-            # Await the plan first (usually ~300ms)
-            plan = await plan_task
-            
-            refined_intent = plan.get("intent")
-            if refined_intent:
-                yield f"data: {json.dumps({'type': 'thought', 'content': refined_intent})}\n\n"
-            
-            sub_queries = plan.get("queries", [query])
-            for sq in sub_queries:
-                yield f"data: {json.dumps({'type': 'query_step', 'content': sq})}\n\n"
-                # Give UI 100ms to visually pop the search pill in (Perplexity style)
-                await asyncio.sleep(0.1)
-
-            # Genuine Progress Tracking: Step 2 (This status is now less relevant as sources are already sent)
-            # yield f"data: {json.dumps({'type': 'status', 'content': 'Scanning internet...'})}\n\n"
-            
-            # Genuine Progress Tracking: Step 3
-            if len(frontend_sources) > 0:
-                yield f"data: {json.dumps({'type': 'status', 'content': f'Reading {len(frontend_sources)} sources'})}\n\n"
-            else:
-                yield f"data: {json.dumps({'type': 'status', 'content': 'No sources found, using internal knowledge'})}\n\n"
-
-            # --- PHASE 3: CALCULATE PRECISE THOUGHT TIME & START LLM ---
-            import time
+            # --- PHASE 3: START LLM STREAM ---
             thought_time = time.time() - start_time
             yield f"data: {json.dumps({'type': 'thought_time', 'time': round(thought_time, 1)})}\n\n"
-
-            # Micro sleep so the "Reading X sources" text flashes briefly before stream starts
-            await asyncio.sleep(0.2)
+            
             yield f"data: {json.dumps({'type': 'status', 'content': 'Synthesizing response'})}\n\n"
 
-            # Stream LLM answer directly — no queue overhead, no pre-warming gap
+            # Stream LLM answer directly
             async for chunk in groq_llm_service.stream_answer(query, search_results, messages):
                 yield f"data: {json.dumps({'type': 'token', 'content': chunk})}\n\n"
+            
+            # --- PHASE 4: FINAL SOURCES (Delayed for UX) ---
+            # Yield sources ONLY AFTER synthesis is done
+            if len(frontend_sources) > 0:
+                yield f"data: {json.dumps({'type': 'sources', 'sources': frontend_sources, 'items': frontend_sources})}\n\n"
                 
-            # 4. End Stream
             yield "data: {\"type\":\"done\"}\n\n"
             
         except Exception as e:

@@ -29,7 +29,7 @@ class TavilySearchService:
             response = await self.client.search(
                 query=query,
                 max_results=max_results,
-                search_depth="advanced",
+                search_depth="basic",
                 include_answer=False,
                 include_images=False,
                 include_raw_content=False,

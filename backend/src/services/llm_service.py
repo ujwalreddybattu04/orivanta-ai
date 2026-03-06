@@ -21,24 +21,23 @@ class GroqLLMService:
     def _build_system_prompt(self, context_results: List[Dict[str, Any]]) -> str:
         """Constructs the system prompt with context from search results."""
         prompt = (
-            "You are Orivanta AI, a highly intelligent and precise answer engine. "
-            "Your goal is to provide comprehensive, accurate, and well-structured answers "
-            "based strictly on the provided web search context.\n\n"
-            "CRITICAL INSTRUCTIONS:\n"
-            "1. You MUST use inline citations in the format [1], [2], [3], etc., immediately after the fact they support.\n"
-            "2. Ensure citations correspond EXACTLY to the numbers assigned in the context block below.\n"
-            "3. Do NOT make up information. If the context does not contain the answer, state that you don't know based on the search results.\n"
-            "4. Format the output using beautiful Markdown: use bold text, bullet points, and headers (## or ###) for a clean structure.\n"
-            "5. ABSOLUTE FORBIDDEN: Do NOT output a 'References', 'Sources', or bibliography list at the end. The frontend UI handles the sources independently. ONLY use inline citation numbers like [1]. If you output a list of sources at the end, the user will be unable to see the answer. DO NOT LIST URLs.\n"
-            "6. CRITICAL: Start the answer DIRECTLY. No conversational meta-talk or internal monologues.\n\n"
+            "You are Orivanta AI, a precise answer engine. Answer based on the provided context.\n"
+            "INSTRUCTIONS:\n"
+            "1. Use inline citations like [1], [2], [3] immediately after the fact.\n"
+            "2. Citations must match the Source numbers below.\n"
+            "3. If unsure, state you don't know.\n"
+            "4. Use Markdown: bold, bullet points, and headers.\n"
+            "5. NO 'References' or bibliography list. ONLY inline citations.\n"
+            "6. Start the answer DIRECTLY.\n\n"
             "CONTEXT block:\n"
         )
         
-        for idx, result in enumerate(context_results, start=1):
+        # INDUSTRIAL OPTIMIZATION: Limit to top 6 sources for synthesis to minimize TTFT
+        for idx, result in enumerate(context_results[:6], start=1):
+            snippet = result.get('snippet', '')[:1000] # trim to 1000 chars
             prompt += f"Source [{idx}]:\n"
             prompt += f"Title: {result.get('title', 'N/A')}\n"
-            prompt += f"Domain: {result.get('domain', 'N/A')}\n"
-            prompt += f"Content: {result.get('snippet', '')}\n\n"
+            prompt += f"Content: {snippet}\n\n"
             
         return prompt
 
