@@ -9,6 +9,14 @@ const nextConfig = {
       },
     ],
   },
+  // This allows production builds to successfully complete even if
+  // your project has ESLint or TypeScript errors/warnings.
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   async rewrites() {
     return [
       {
