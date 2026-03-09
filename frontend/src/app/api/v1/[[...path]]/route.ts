@@ -2,20 +2,19 @@ import { NextRequest } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+const BACKEND_URL = (process.env.BACKEND_URL || 'https://orivanta-87056410261.europe-west1.run.app').replace(/\/$/, '');
+
 export async function POST(
     request: NextRequest,
-    { params }: { params: { path: string[] } }
+    { params }: { params: Promise<{ path: string[] }> }
 ) {
-    const path = params.path.join('/');
-    const backendUrl = 'https://orivanta-87056410261.europe-west1.run.app'.replace(/\/$/, "");
-    const targetUrl = `${backendUrl}/api/v1/${path}`;
+    const { path } = await params;
+    const targetUrl = `${BACKEND_URL}/api/v1/${path.join('/')}`;
 
     console.log(`[proxy] Proxying POST to: ${targetUrl}`);
 
     try {
         const body = await request.json();
-
-        console.log(`[proxy] Target URL: ${targetUrl}`);
 
         const response = await fetch(targetUrl, {
             method: 'POST',
@@ -69,11 +68,10 @@ export async function POST(
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { path: string[] } }
+    { params }: { params: Promise<{ path: string[] }> }
 ) {
-    const path = params.path.join('/');
-    const backendUrl = 'https://orivanta-87056410261.europe-west1.run.app'.replace(/\/$/, "");
-    const targetUrl = `${backendUrl}/api/v1/${path}`;
+    const { path } = await params;
+    const targetUrl = `${BACKEND_URL}/api/v1/${path.join('/')}`;
 
     console.log(`[proxy] Proxying GET to: ${targetUrl}`);
 
