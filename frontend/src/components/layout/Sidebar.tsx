@@ -13,7 +13,7 @@ const NAV_ITEMS = [
         icon: (
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="21" x2="21" y2="16.65" />
             </svg>
         ),
     },
@@ -371,28 +371,6 @@ export default function Sidebar() {
                     </div>
                 </div>
 
-                {/* Delete Confirmation Modal */}
-                {showDeleteModal && (
-                    <div className="modal-overlay" onClick={closeDeleteModal}>
-                        <div className="modal-content delete-modal" onClick={e => e.stopPropagation()}>
-                            <h3 className="modal-title">Delete chat?</h3>
-                            <p className="modal-msg">
-                                This will delete <strong>{threadToDelete?.title}</strong>.
-                                <br />
-                                <span className="modal-submsg">Visit settings to delete any memories saved during this chat.</span>
-                            </p>
-                            <div className="modal-actions">
-                                <button className="modal-btn modal-btn--cancel" onClick={closeDeleteModal}>
-                                    Cancel
-                                </button>
-                                <button className="modal-btn modal-btn--delete" onClick={confirmDelete}>
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Footer */}
                 <div className="sidebar-footer">
                     <button
@@ -417,6 +395,28 @@ export default function Sidebar() {
                     </Link>
                 </div>
             </aside>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="modal-overlay" onClick={closeDeleteModal}>
+                    <div className="modal-content delete-modal" onClick={e => e.stopPropagation()}>
+                        <h3 className="modal-title">Delete chat?</h3>
+                        <p className="modal-msg">
+                            This will delete <strong>{threadToDelete?.title}</strong>.
+                            <br />
+                            <span className="modal-submsg">Visit settings to delete any memories saved during this chat.</span>
+                        </p>
+                        <div className="modal-actions">
+                            <button className="modal-btn modal-btn--cancel" onClick={closeDeleteModal}>
+                                Cancel
+                            </button>
+                            <button className="modal-btn modal-btn--delete" onClick={confirmDelete}>
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

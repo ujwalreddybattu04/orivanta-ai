@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const API_BASE = typeof window !== "undefined" && window.location.hostname !== "localhost" 
-    ? "" 
+const API_BASE = typeof window !== "undefined" && window.location.hostname !== "localhost"
+    ? ""
     : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
 
 export interface SearchSource {
@@ -149,6 +149,58 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
         };
     }, [state.isStreaming]);
 
+    // --- PERSISTENCE EFFECT ---
+    // Save thread to localStorage when streaming completes successfully
+    useEffect(() => {
+        // Only persist when search is totally finished, has content, and no error
+        if (!state.isStreaming && !state.isConnecting && !state.error && state.answer) {
+            if (typeof window === "undefined") return;
+
+            const isPrivate = sessionStorage.getItem("corten_private_mode") === "true";
+            if (isPrivate) return;
+
+            try {
+                let currentThreadId = threadIdRef.current;
+                if (!currentThreadId) {
+                    currentThreadId = generateThreadId();
+                    threadIdRef.current = currentThreadId;
+                }
+
+                const threadsJson = localStorage.getItem("corten_threads") || localStorage.getItem("orivanta_threads");
+                let threads: ThreadData[] = threadsJson ? JSON.parse(threadsJson) : [];
+
+                const existingIdx = threads.findIndex(t => t.id === currentThreadId);
+
+                const threadToSave: ThreadData = {
+                    id: currentThreadId,
+                    title: existingIdx >= 0 && threads[existingIdx].title ? threads[existingIdx].title : state.query,
+                    createdAt: existingIdx >= 0 ? threads[existingIdx].createdAt : Date.now(),
+                    updatedAt: Date.now(),
+                    query: state.query,
+                    history: state.history,
+                    answer: state.answer,
+                    sources: state.sources,
+                    images: state.images,
+                    researchSteps: state.researchSteps,
+                    thoughtTime: state.thoughtTime,
+                };
+
+                if (existingIdx >= 0) {
+                    threads[existingIdx] = threadToSave;
+                } else {
+                    threads.unshift(threadToSave);
+                }
+
+                localStorage.setItem("corten_threads", JSON.stringify(threads));
+
+                // Dispatch event so Sidebar knows to reload its list
+                window.dispatchEvent(new Event("corten_threads_updated"));
+            } catch (e) {
+                console.error("[useSearch] Failed to persist thread:", e);
+            }
+        }
+    }, [state.isStreaming, state.isConnecting, state.error, state.answer, state.query, state.history, state.sources, state.images, state.researchSteps, state.thoughtTime]);
+
     const runSearch = useCallback(async (q: string, focus: string, backendMessages?: any[], keepHistory?: SearchMessage[]) => {
         if (!q.trim()) return;
 
@@ -198,9 +250,6 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
                 if (done) break;
 
                 const chunk = decoder.decode(value, { stream: true });
-                if (chunk.includes('"type": "sources"')) {
-                    console.log("[useSearch] RAW SOURCE CHUNK DETECTED:", chunk);
-                }
                 buffer += chunk;
                 const lines = buffer.split("\n");
                 buffer = lines.pop() || "";
@@ -209,7 +258,6 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
                     const trimmed = line.trim();
                     if (!trimmed || trimmed === "data: [DONE]") continue;
 
-                    // Support both "data: {...}" and "data:{...}"
                     if (!trimmed.startsWith("data:")) continue;
 
                     try {
@@ -221,12 +269,7 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
                             streamingBufferRef.current += chunk;
                             setState(prev => ({ ...prev, answer: prev.answer + chunk }));
                         } else if (json.type === "sources") {
-                            // Support multiple possible keys for robustness
                             const sourcesList = json.sources || json.items || json.results || [];
-                            console.log(`[useSearch] SOURCES ARRIVED! Count: ${sourcesList.length}`);
-                            if (sourcesList.length > 0) {
-                                console.log("[useSearch] First source sample:", sourcesList[0]);
-                            }
                             setState(prev => ({ ...prev, sources: sourcesList }));
                         } else if (json.type === "images") {
                             setState(prev => ({ ...prev, images: json.images || [] }));
@@ -255,7 +298,6 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
             }
 
             // --- LLM TITLE GENERATION ---
-            // If this is the very first query of a new thread, generate a title asynchronously
             if (!keepHistory || keepHistory.length === 0) {
                 fetch(`${API_BASE}/api/v1/search/title`, {
                     method: "POST",
@@ -275,7 +317,6 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
                                     if (threadIdx >= 0) {
                                         threads[threadIdx].title = data.title;
                                         localStorage.setItem("corten_threads", JSON.stringify(threads));
-                                        // Trigger a custom event so the Sidebar can re-render immediately
                                         window.dispatchEvent(new Event("corten_threads_updated"));
                                     }
                                 }
@@ -296,59 +337,7 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
                 isConnecting: false,
             }));
         } finally {
-            console.log("[useSearch] runSearch finally block reached. Sources count:", state.sources.length);
-            setState(prev => {
-                const nextState = { ...prev, isStreaming: false, isConnecting: false };
-
-                // --- LOCAL STORAGE PERSISTENCE ---
-                if (typeof window !== "undefined" && !nextState.error && nextState.answer) {
-                    let currentThreadId = threadIdRef.current;
-                    if (!currentThreadId) {
-                        currentThreadId = generateThreadId();
-                        threadIdRef.current = currentThreadId;
-                    }
-                    nextState.threadId = currentThreadId; // Attach to state for UI if needed
-
-                    const isPrivate = typeof window !== "undefined" && sessionStorage.getItem("corten_private_mode") === "true";
-
-                    if (!isPrivate) {
-                        try {
-                            const threadsJson = localStorage.getItem("corten_threads") || localStorage.getItem("orivanta_threads");
-                            let threads: ThreadData[] = threadsJson ? JSON.parse(threadsJson) : [];
-
-                            const existingIdx = threads.findIndex(t => t.id === currentThreadId);
-
-                            const threadToSave: ThreadData = {
-                                id: currentThreadId,
-                                title: existingIdx >= 0 && threads[existingIdx].title ? threads[existingIdx].title : nextState.query,
-                                createdAt: existingIdx >= 0 ? threads[existingIdx].createdAt : Date.now(),
-                                updatedAt: Date.now(),
-                                query: nextState.query,
-                                history: nextState.history,
-                                answer: nextState.answer,
-                                sources: nextState.sources,
-                                images: nextState.images,
-                                researchSteps: nextState.researchSteps,
-                                thoughtTime: nextState.thoughtTime,
-                            };
-
-                            if (existingIdx >= 0) {
-                                threads[existingIdx] = threadToSave;
-                            } else {
-                                threads.unshift(threadToSave);
-                            }
-
-                            localStorage.setItem("corten_threads", JSON.stringify(threads));
-                            // Dispatch event for Sidebar
-                            window.dispatchEvent(new Event("corten_threads_updated"));
-                        } catch (e) {
-                            console.error("Failed to save thread to localStorage:", e);
-                        }
-                    }
-                }
-
-                return nextState;
-            });
+            setState(prev => ({ ...prev, isStreaming: false, isConnecting: false }));
         }
     }, []);
 
@@ -404,34 +393,27 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
                                 threadIdRef.current = thread.id;
                                 hasStarted.current = true;
                                 lastProcessedQuery.current = thread.query;
-                                return; // Stop here, fully hydrated!
                             }
                         }
                     } catch (e) {
-                        console.error("Failed to hydrate thread:", e);
+                        console.error("Failed to load existing thread:", e);
                     }
                 }
             }
         }
 
-        // Otherwise (or if hydration failed), run fresh search if query changed
-        if (!initialQuery || (hasStarted.current && lastProcessedQuery.current === initialQuery)) return;
+        if (initialQuery && !hasStarted.current && !existingThreadId) {
+            hasStarted.current = true;
+            lastProcessedQuery.current = initialQuery;
+            runSearch(initialQuery, focusMode);
+        }
+    }, [initialQuery, existingThreadId, focusMode, runSearch]);
 
-        hasStarted.current = true;
-        lastProcessedQuery.current = initialQuery;
-
-        runSearch(initialQuery, focusMode);
-        return () => {
-            // We abort the in-flight request on cleanup
-            console.log("[useSearch] useEffect Cleanup triggered");
-            abortRef.current?.abort();
-            lastProcessedQuery.current = null;
-        };
-    }, [initialQuery, focusMode, existingThreadId, runSearch]);
-
-    // isDisplayComplete: true only when streaming is done AND the display buffer is fully drained.
-    // This prevents follow-ups/actions from appearing while the answer is still visually rendering.
-    const isDisplayComplete = !state.isStreaming && !isBufferDraining;
-
-    return { ...state, displayAnswer: displayAnswer || state.answer, isDisplayComplete, appendQuery, retry: () => runSearch(state.query, focusMode) };
+    return {
+        ...state,
+        displayAnswer,
+        isBufferDraining,
+        isDisplayComplete: !state.isStreaming && !isBufferDraining,
+        appendQuery,
+    };
 }
