@@ -145,52 +145,43 @@ function SearchPageContent() {
             <div className={`sp-layout ${sourcesPanelOpen ? "sp-layout--panel-open" : ""}`}>
                 {/* ─── Main Column ─── */}
                 <div className="sp-main">
-                    {/* Tab Bar */}
-                    <motion.div
-                        className="sp-tabbar"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, ease: "easeOut" }}
-                    >
-                        <div className="sp-tabs" role="tablist" aria-label="Search views">
-                            <button
-                                role="tab"
-                                aria-selected={activeTab === "answer"}
-                                className={`sp-tab ${activeTab === "answer" ? "sp-tab--active" : ""}`}
-                                onClick={() => setActiveTab("answer")}
-                            >
-                                <Sparkles size={13} strokeWidth={2.5} />
-                                Answer
-                            </button>
-                            <button
-                                role="tab"
-                                aria-selected={activeTab === "links"}
-                                className={`sp-tab ${activeTab === "links" ? "sp-tab--active" : ""}`}
-                                onClick={() => setActiveTab("links")}
-                            >
-                                <Globe size={13} strokeWidth={2.5} />
-                                Links
-                            </button>
-                            <button
-                                role="tab"
-                                aria-selected={activeTab === "images"}
-                                className={`sp-tab ${activeTab === "images" ? "sp-tab--active" : ""}`}
-                                onClick={() => setActiveTab("images")}
-                            >
-                                <ImageIcon size={13} strokeWidth={2.5} />
-                                Images
-                            </button>
-                        </div>
-                        <div className="sp-tabbar-right">
-                            <button className="sp-more-btn" aria-label="More options">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
-                            </button>
-                            <button className="sp-share-btn" aria-label="Share">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /><line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></svg>
-                                Share
-                            </button>
-                        </div>
-                    </motion.div>
+                    {/* Responsive Tab Bar & Mobile Header */}
+                    <div className="sp-header-container">
+                        <motion.div
+                            className="sp-tabbar"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                        >
+                            <div className="sp-tabs">
+                                <button
+                                    className={`sp-tab ${activeTab === "answer" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("answer")}
+                                >
+                                    <Sparkles size={14} />
+                                    <span>Answer</span>
+                                </button>
+                                <button
+                                    className={`sp-tab ${activeTab === "links" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("links")}
+                                >
+                                    <Globe size={14} />
+                                    <span>Links</span>
+                                </button>
+                                <button
+                                    className={`sp-tab ${activeTab === "images" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("images")}
+                                >
+                                    <ImageIcon size={14} />
+                                    <span>Images</span>
+                                </button>
+                            </div>
+
+                            <div className="sp-tabbar-right">
+                                <button className="sp-share-btn">Share</button>
+                            </div>
+                        </motion.div>
+                    </div>
 
                     {/* Scrollable Content Area */}
                     <div className="sp-content">
@@ -504,8 +495,8 @@ function SearchPageContent() {
                         </div>
                     )}
                 </aside>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
 

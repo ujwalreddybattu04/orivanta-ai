@@ -109,13 +109,13 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
             if (!lastUpdateTimeRef.current) lastUpdateTimeRef.current = timestamp;
             const progress = timestamp - lastUpdateTimeRef.current;
 
-            // Update roughly every 50ms for "buttery" feel (20fps for text is ideal)
-            if (progress > 50 && streamingBufferRef.current.length > 0) {
-                // Take a small slice of the buffer. 
-                // We take up to 8 chars or until the next space to keep it word-ish.
-                let sliceEnd = 8;
-                const nextSpace = streamingBufferRef.current.indexOf(" ", 5);
-                if (nextSpace !== -1 && nextSpace < 15) {
+            // Update roughly every 30ms for "buttery" feel (Higher frequency for faster rendering)
+            if (progress > 30 && streamingBufferRef.current.length > 0) {
+                // Take a slice of the buffer. 
+                // We take up to 12 chars or until the next space to keep it word-ish.
+                let sliceEnd = 12;
+                const nextSpace = streamingBufferRef.current.indexOf(" ", 8);
+                if (nextSpace !== -1 && nextSpace < 20) {
                     sliceEnd = nextSpace + 1;
                 }
 

@@ -64,6 +64,8 @@ export default function Sidebar() {
     const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState("");
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [threadToDelete, setThreadToDelete] = useState<{ id: string, title: string } | null>(null);
 
     // Read threads and pins from local storage
     const loadThreads = () => {
@@ -134,9 +136,18 @@ export default function Sidebar() {
         setActiveMenuId(null);
     };
 
-    const handleDelete = (e: React.MouseEvent, id: string) => {
+    const handleDeleteClick = (e: React.MouseEvent, thread: any) => {
         e.preventDefault();
         e.stopPropagation();
+        setThreadToDelete({ id: thread.id, title: thread.title || thread.query });
+        setShowDeleteModal(true);
+        setActiveMenuId(null);
+    };
+
+    const confirmDelete = () => {
+        if (!threadToDelete) return;
+
+        const { id } = threadToDelete;
         const updatedThreads = threads.filter(t => t.id !== id);
         setThreads(updatedThreads);
         localStorage.setItem(STORAGE_KEYS.THREADS, JSON.stringify(updatedThreads));
@@ -147,12 +158,18 @@ export default function Sidebar() {
         localStorage.setItem(STORAGE_KEYS.PINNED_THREADS, JSON.stringify(updatedPins));
 
         window.dispatchEvent(new Event(EVENTS.THREADS_UPDATED));
-        setActiveMenuId(null);
 
         // If we are on the deleted thread, go home
         if (activeThreadId === id) {
             router.push("/");
         }
+
+        closeDeleteModal();
+    };
+
+    const closeDeleteModal = () => {
+        setShowDeleteModal(false);
+        setThreadToDelete(null);
     };
 
     const startRename = (e: React.MouseEvent, thread: any) => {
@@ -342,7 +359,7 @@ export default function Sidebar() {
                                                 )}
                                             </button>
                                             <div className="menu-divider" />
-                                            <button className="menu-item delete" onClick={(e) => handleDelete(e, thread.id)}>
+                                            <button className="menu-item delete" onClick={(e) => handleDeleteClick(e, thread)}>
                                                 <Trash2 size={12} />
                                                 Delete
                                             </button>
@@ -353,6 +370,28 @@ export default function Sidebar() {
                         )}
                     </div>
                 </div>
+
+                {/* Delete Confirmation Modal */}
+                {showDeleteModal && (
+                    <div className="modal-overlay" onClick={closeDeleteModal}>
+                        <div className="modal-content delete-modal" onClick={e => e.stopPropagation()}>
+                            <h3 className="modal-title">Delete chat?</h3>
+                            <p className="modal-msg">
+                                This will delete <strong>{threadToDelete?.title}</strong>.
+                                <br />
+                                <span className="modal-submsg">Visit settings to delete any memories saved during this chat.</span>
+                            </p>
+                            <div className="modal-actions">
+                                <button className="modal-btn modal-btn--cancel" onClick={closeDeleteModal}>
+                                    Cancel
+                                </button>
+                                <button className="modal-btn modal-btn--delete" onClick={confirmDelete}>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Footer */}
                 <div className="sidebar-footer">

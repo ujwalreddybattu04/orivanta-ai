@@ -99,15 +99,36 @@ const AnswerStream = memo(({
         console.log(`[AnswerStream] Stream state check: sources=${sources.length}, isStreaming=${isStreaming}`);
     }
 
+    // --- MANUAL SCROLL OVERRIDE ---
+    const userScrolledUpRef = useRef(false);
+
     // Auto-scroll: track the cursor so the text generation stays in view without forcing a full bottom scroll
     useEffect(() => {
-        if (!isStreaming) return;
+        if (!isStreaming) {
+            userScrolledUpRef.current = false;
+            return;
+        }
 
         const scrollable = document.querySelector('.sp-content');
         if (!scrollable) return;
 
+        // Listener to detect manual scroll up
+        const handleScroll = () => {
+            const { scrollTop, scrollHeight, clientHeight } = scrollable;
+            // threshold of 100px from bottom to consider "at bottom"
+            const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+
+            if (!isAtBottom) {
+                userScrolledUpRef.current = true;
+            } else {
+                userScrolledUpRef.current = false;
+            }
+        };
+
+        scrollable.addEventListener('scroll', handleScroll);
+
         const cursor = scrollable.querySelector('.answer-cursor');
-        if (cursor) {
+        if (cursor && !userScrolledUpRef.current) {
             const cursorRect = cursor.getBoundingClientRect();
             const scrollableRect = scrollable.getBoundingClientRect();
 
@@ -117,6 +138,10 @@ const AnswerStream = memo(({
                 scrollable.scrollBy({ top: cursorRect.bottom - scrollableRect.bottom + 40, behavior: "smooth" });
             }
         }
+
+        return () => {
+            scrollable.removeEventListener('scroll', handleScroll);
+        };
     }, [content, isStreaming]);
 
     const handleCopy = () => {
