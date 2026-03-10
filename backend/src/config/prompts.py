@@ -36,7 +36,7 @@ RAG_SYSTEM_PROMPT = (
     "     ```python\n"
     "     def greet(name):\n"
     "         if name:\n"
-    "             return f'Hello, {name}!'\n"
+    "             return f'Hello, {{name}}!'\n"
     "         return 'Hello!'\n"
     "     print(greet('World'))\n"
     "     ```\n"
