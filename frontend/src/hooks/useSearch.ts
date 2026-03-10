@@ -18,8 +18,10 @@ export interface SearchSource {
 
 export interface SearchImage {
     url: string;
+    thumbnailUrl?: string;
     alt: string;
     sourceUrl?: string;
+    source?: string;
 }
 
 export interface SearchMessage {

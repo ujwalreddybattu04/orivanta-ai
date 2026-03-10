@@ -354,6 +354,9 @@ function SearchPageContent() {
                                                     relatedQuestions={relatedQuestions}
                                                     onRelatedSelect={handleRelatedSelect}
                                                 />
+                                                {isDisplayComplete && images.length > 0 && (
+                                                    <ImagesGrid images={images} mode="strip" />
+                                                )}
                                             </div>
                                         )}
 
@@ -411,35 +414,26 @@ function SearchPageContent() {
                             {/* === IMAGES TAB === */}
                             {activeTab === "images" && (
                                 <div className="sp-images-tab">
+                                    {/* History turns */}
                                     {history && history.map((turn, idx) => (
                                         turn.images && turn.images.length > 0 && (
                                             <div key={idx} className="sp-thread-turn">
                                                 <div className="sp-query-bubble">{turn.query}</div>
-                                                <div className="sp-image-grid">
-                                                    {turn.images.map((img, i) => (
-                                                        <a key={i} href={img.url} target="_blank" rel="noopener noreferrer" className="sp-image-card">
-                                                            <div className="sp-image-wrapper"><img src={img.url} alt="result" /></div>
-                                                            <div className="sp-image-meta"><span>{(() => { try { return new URL(img.url).hostname.replace('www.', ''); } catch (e) { return 'Image'; } })()}</span></div>
-                                                        </a>
-                                                    ))}
-                                                </div>
+                                                <ImagesGrid images={turn.images} mode="grid" />
                                             </div>
                                         )
                                     ))}
+
+                                    {/* Current turn */}
                                     {(isConnecting || isStreaming || answer || images.length > 0) && (
                                         <div className="sp-thread-turn">
                                             <div className="sp-query-bubble">{currentQuery}</div>
                                             {images.length > 0 ? (
-                                                <motion.div className="sp-image-grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                                                    {images.map((img, i) => (
-                                                        <a key={i} href={img.url} target="_blank" rel="noopener noreferrer" className="sp-image-card">
-                                                            <div className="sp-image-wrapper"><img src={img.url} alt="result" /></div>
-                                                            <div className="sp-image-meta"><span>{(() => { try { return new URL(img.url).hostname.replace('www.', ''); } catch (e) { return 'Image'; } })()}</span></div>
-                                                        </a>
-                                                    ))}
-                                                </motion.div>
+                                                <ImagesGrid images={images} mode="grid" />
                                             ) : (
-                                                <div className="sp-images-loading">Searching...</div>
+                                                <div className="sp-images-loading">
+                                                    {isConnecting || isStreaming ? "Searching for images..." : "No images found."}
+                                                </div>
                                             )}
                                         </div>
                                     )}

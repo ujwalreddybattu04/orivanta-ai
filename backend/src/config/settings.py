@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     GOOGLE_SEARCH_CX: str = ""
     BING_SEARCH_API_KEY: str = ""
     TAVILY_API_KEY: str = ""
+    SERPER_API_KEY: str = ""
 
     # --- Rate Limiting ---
     RATE_LIMIT_PER_MINUTE: int = 30
