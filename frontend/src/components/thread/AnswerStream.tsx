@@ -1,10 +1,13 @@
 "use client";
-import { useRef, useEffect, memo, useMemo, useState } from "react";
+import { useRef, useEffect, memo, useMemo, useState, useCallback } from "react";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { SearchSource, ResearchStep } from "@/hooks/useSearch";
 import { ResearchProgress } from "./ResearchProgress";
+import CodeRunnerModal, { isRunnable } from "./CodeRunnerModal";
+import HtmlPreviewModal from "./HtmlPreviewModal";
+import { preloadPyodide } from "@/hooks/usePyodideWorker";
 
 // Premium Formatting Dependencies
 import remarkMath from "remark-math";
@@ -46,6 +49,21 @@ const AnswerStream = memo(({
     const contentRef = useRef<HTMLDivElement>(null);
     const [localCopied, setLocalCopied] = useState(false);
     const [localSourcesPanelOpen, setLocalSourcesPanelOpen] = useState(false);
+
+    // Code runner modal state
+    const [runnerState, setRunnerState] = useState<{ code: string; language: string } | null>(null);
+    // HTML preview modal state
+    const [previewCode, setPreviewCode] = useState<string | null>(null);
+    const setPreviewCodeRef = useRef(setPreviewCode);
+    setPreviewCodeRef.current = setPreviewCode;
+    // Stable ref so useMemo doesn't need to re-run when setRunnerState changes
+    const setRunnerStateRef = useRef(setRunnerState);
+    setRunnerStateRef.current = setRunnerState;
+
+    // Pre-warm Pyodide in the background so it's ready before user clicks Run
+    useEffect(() => {
+        preloadPyodide();
+    }, []);
 
     // Use external state if provided (for page-level control), otherwise use local state
     const sourcesPanelOpen = externalSourcesPanelOpen !== undefined ? externalSourcesPanelOpen : localSourcesPanelOpen;
@@ -173,13 +191,16 @@ const AnswerStream = memo(({
             li: ({ children }: any) => (
                 <li className={`answer-list-item${lineClass}`}>{children}</li>
             ),
-            code: ({ children, className, node }: any) => {
+            code: ({ children, className }: any) => {
                 const isBlock = className?.includes("language-");
                 const language = className ? className.replace("language-", "") : "";
 
                 if (isBlock) {
                     const [copied, setCopied] = useState(false);
                     const codeString = String(children).replace(/\n$/, "");
+                    const lang = language.toLowerCase();
+                    const isHtml = lang === "html" || lang === "htm" || lang === "svg";
+                    const canRun = !isHtml && isRunnable(language);
 
                     const copyCode = () => {
                         navigator.clipboard.writeText(codeString);
@@ -187,28 +208,47 @@ const AnswerStream = memo(({
                         setTimeout(() => setCopied(false), 2000);
                     };
 
-                    const isTerminal = ["bash", "sh", "zsh", "shell", "terminal"].includes(language.toLowerCase());
-                    const containerClass = isTerminal ? "answer-code-block-terminal" : "answer-code-block";
+                    const openRunner  = () => setRunnerStateRef.current({ code: codeString, language });
+                    const openPreview = () => setPreviewCodeRef.current(codeString);
 
                     return (
                         <div className={`answer-code-container ${lineClass}`}>
                             <div className="answer-code-header">
                                 <span className="answer-code-lang">{language || "code"}</span>
-                                <button className="answer-copy-code-btn" onClick={copyCode}>
-                                    {copied ? (
-                                        <div className="answer-copy-code-success">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                            <span>Copied</span>
-                                        </div>
-                                    ) : (
-                                        <div className="answer-copy-code-default">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                                <div className="answer-code-header-actions">
+                                    {isHtml && (
+                                        <button className="answer-preview-btn" onClick={openPreview} title="Preview HTML">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                                <circle cx="12" cy="12" r="3"/>
                                             </svg>
-                                            <span>Copy</span>
-                                        </div>
+                                            Preview
+                                        </button>
                                     )}
-                                </button>
+                                    {canRun && (
+                                        <button className="answer-run-btn" onClick={openRunner} title="Run code">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                                                <polygon points="5 3 19 12 5 21 5 3" />
+                                            </svg>
+                                            Run
+                                        </button>
+                                    )}
+                                    <button className="answer-copy-code-btn" onClick={copyCode}>
+                                        {copied ? (
+                                            <div className="answer-copy-code-success">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                                <span>Copied</span>
+                                            </div>
+                                        ) : (
+                                            <div className="answer-copy-code-default">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                                                </svg>
+                                                <span>Copy</span>
+                                            </div>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                             <SyntaxHighlighter
                                 language={language || "text"}
@@ -301,6 +341,20 @@ const AnswerStream = memo(({
     }, [sources, isStreaming]);
 
     return (
+        <>
+        {runnerState && (
+            <CodeRunnerModal
+                code={runnerState.code}
+                language={runnerState.language}
+                onClose={() => setRunnerState(null)}
+            />
+        )}
+        {previewCode !== null && (
+            <HtmlPreviewModal
+                code={previewCode}
+                onClose={() => setPreviewCode(null)}
+            />
+        )}
         <div className="answer-stream" id="answer-stream" ref={contentRef}>
             {/* Research Progress / Thinking State */}
             <ResearchProgress
@@ -450,6 +504,7 @@ const AnswerStream = memo(({
                 </div>
             )}
         </div>
+        </>
     );
 });
 

@@ -162,6 +162,7 @@ function SearchPageContent() {
                                 <button
                                     className={`sp-tab ${activeTab === "answer" ? "active" : ""}`}
                                     onClick={() => setActiveTab("answer")}
+                                    suppressHydrationWarning
                                 >
                                     <Sparkles size={14} />
                                     <span>Answer</span>
@@ -169,6 +170,7 @@ function SearchPageContent() {
                                 <button
                                     className={`sp-tab ${activeTab === "links" ? "active" : ""}`}
                                     onClick={() => setActiveTab("links")}
+                                    suppressHydrationWarning
                                 >
                                     <Globe size={14} />
                                     <span>Links</span>
@@ -176,6 +178,7 @@ function SearchPageContent() {
                                 <button
                                     className={`sp-tab ${activeTab === "images" ? "active" : ""}`}
                                     onClick={() => setActiveTab("images")}
+                                    suppressHydrationWarning
                                 >
                                     <ImageIcon size={14} />
                                     <span>Images</span>
@@ -534,15 +537,15 @@ function SearchPageSkeleton() {
                 <div className="sp-main">
                     <div className="sp-tabbar">
                         <div className="sp-tabs">
-                            <button className="sp-tab sp-tab--active" disabled>
+                            <button className="sp-tab sp-tab--active" disabled suppressHydrationWarning>
                                 <Sparkles size={13} strokeWidth={2.5} />
                                 Answer
                             </button>
-                            <button className="sp-tab" disabled>
+                            <button className="sp-tab" disabled suppressHydrationWarning>
                                 <Globe size={13} strokeWidth={2.5} />
                                 Links
                             </button>
-                            <button className="sp-tab" disabled>
+                            <button className="sp-tab" disabled suppressHydrationWarning>
                                 <ImageIcon size={13} strokeWidth={2.5} />
                                 Images
                             </button>

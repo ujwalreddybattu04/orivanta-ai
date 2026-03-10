@@ -217,6 +217,7 @@ export default function Sidebar() {
                 className="mobile-menu-toggle"
                 onClick={() => setIsMobileOpen(true)}
                 aria-label="Open menu"
+                suppressHydrationWarning
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" x2="21" y1="12" y2="12" /><line x1="3" x2="21" y1="6" y2="6" /><line x1="3" x2="21" y1="18" y2="18" /></svg>
             </button>
@@ -240,7 +241,7 @@ export default function Sidebar() {
                     <span className="sidebar-brand-name">Corten</span>
 
                     {/* Mobile Close Button */}
-                    <button className="mobile-close-btn" onClick={() => setIsMobileOpen(false)}>
+                    <button className="mobile-close-btn" onClick={() => setIsMobileOpen(false)} suppressHydrationWarning>
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="6" y1="6" y2="18" /><line x1="6" x2="18" y1="6" y2="18" /></svg>
                     </button>
                 </div>
@@ -284,13 +285,14 @@ export default function Sidebar() {
                             className="memory-search-input"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            suppressHydrationWarning
                         />
                     </div>
 
                     <div className="memory-filters">
-                        <button className="memory-filter active">All</button>
-                        <button className="memory-filter">Today</button>
-                        <button className="memory-filter">Yesterday</button>
+                        <button className="memory-filter active" suppressHydrationWarning>All</button>
+                        <button className="memory-filter" suppressHydrationWarning>Today</button>
+                        <button className="memory-filter" suppressHydrationWarning>Yesterday</button>
                     </div>
 
                     <div className="memory-list">
@@ -332,6 +334,7 @@ export default function Sidebar() {
                                                         e.stopPropagation();
                                                         setActiveMenuId(activeMenuId === thread.id ? null : thread.id);
                                                     }}
+                                                    suppressHydrationWarning
                                                 >
                                                     <MoreHorizontal size={14} />
                                                 </button>
@@ -341,11 +344,11 @@ export default function Sidebar() {
 
                                     {activeMenuId === thread.id && (
                                         <div className="thread-context-menu" onClick={(e) => e.stopPropagation()}>
-                                            <button className="menu-item" onClick={(e) => startRename(e, thread)}>
+                                            <button className="menu-item" onClick={(e) => startRename(e, thread)} suppressHydrationWarning>
                                                 <Edit3 size={12} />
                                                 Rename
                                             </button>
-                                            <button className="menu-item" onClick={(e) => togglePin(e, thread.id)}>
+                                            <button className="menu-item" onClick={(e) => togglePin(e, thread.id)} suppressHydrationWarning>
                                                 {pinnedThreadIds.includes(thread.id) ? (
                                                     <>
                                                         <PinOff size={12} strokeWidth={2} />
@@ -359,7 +362,7 @@ export default function Sidebar() {
                                                 )}
                                             </button>
                                             <div className="menu-divider" />
-                                            <button className="menu-item delete" onClick={(e) => handleDeleteClick(e, thread)}>
+                                            <button className="menu-item delete" onClick={(e) => handleDeleteClick(e, thread)} suppressHydrationWarning>
                                                 <Trash2 size={12} />
                                                 Delete
                                             </button>
@@ -377,6 +380,7 @@ export default function Sidebar() {
                         onClick={() => setIsCollapsed(!isCollapsed)}
                         className={`sidebar-link sidebar-collapse-btn ${isCollapsed ? "collapsed-state" : ""}`}
                         title={isCollapsed ? "Expand" : "Collapse"}
+                        suppressHydrationWarning
                     >
                         <span className="sidebar-link-icon collapse-icon-container">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /></svg>
@@ -407,10 +411,10 @@ export default function Sidebar() {
                             <span className="modal-submsg">Visit settings to delete any memories saved during this chat.</span>
                         </p>
                         <div className="modal-actions">
-                            <button className="modal-btn modal-btn--cancel" onClick={closeDeleteModal}>
+                            <button className="modal-btn modal-btn--cancel" onClick={closeDeleteModal} suppressHydrationWarning>
                                 Cancel
                             </button>
-                            <button className="modal-btn modal-btn--delete" onClick={confirmDelete}>
+                            <button className="modal-btn modal-btn--delete" onClick={confirmDelete} suppressHydrationWarning>
                                 Delete
                             </button>
                         </div>
