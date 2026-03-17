@@ -431,20 +431,23 @@ function SearchPageContent() {
                                         </div>
                                     ) : (
                                         <div className="sp-links-list">
-                                            {sources.map((src, i) => (
+                                            {sources.map((src, i) => {
+                                                const ld = (src.domain || '').replace(/^www\./, '') || (src.url ? (() => { try { return new URL(src.url).hostname.replace(/^www\./, ''); } catch { return ''; } })() : '');
+                                                return (
                                                 <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="sp-link-item">
                                                     <div className="sp-link-left">
                                                         <div className="sp-link-favicon">
-                                                            <Favicon url={src.url} domain={src.domain || ''} size={20} />
+                                                            <Favicon url={src.url} domain={ld} size={20} />
                                                         </div>
                                                         <div className="sp-link-content">
-                                                            <div className="sp-link-meta">{src.domain?.replace(/^www\./, '')}</div>
-                                                            <div className="sp-link-title">{src.title}</div>
+                                                            <div className="sp-link-meta">{ld}</div>
+                                                            <div className="sp-link-title">{cleanTitle(src.title || '')}</div>
                                                             {src.snippet && <div className="sp-link-snippet">{cleanSnippet(src.snippet)}</div>}
                                                         </div>
                                                     </div>
                                                 </a>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
@@ -501,7 +504,10 @@ function SearchPageContent() {
                     </div>
                     {activePanelSources.length > 0 ? (
                         <div className="sp-sources-panel-list">
-                            {activePanelSources.map((src, i) => (
+                            {activePanelSources.map((src, i) => {
+                                const rawDomain = src.domain || (src.url ? (() => { try { return new URL(src.url).hostname; } catch { return ''; } })() : '');
+                                const displayDomain = rawDomain.replace(/^www\./, '');
+                                return (
                                 <a
                                     key={i}
                                     href={src.url}
@@ -511,18 +517,17 @@ function SearchPageContent() {
                                 >
                                     <div className="sp-source-item-top">
                                         <div className="sp-source-item-icon">
-                                            <Favicon url={src.url} domain={src.domain || ''} size={16} />
+                                            <Favicon url={src.url} domain={displayDomain} size={16} />
                                         </div>
-                                        <div className="sp-source-item-domain">
-                                            {(src.domain || '').replace(/^www\./, '')}
-                                        </div>
+                                        <div className="sp-source-item-domain">{displayDomain}</div>
                                     </div>
                                     <div className="sp-source-item-title">{cleanTitle(src.title || '')}</div>
                                     {src.snippet && cleanSnippet(src.snippet) && (
                                         <div className="sp-source-item-snippet">{cleanSnippet(src.snippet)}</div>
                                     )}
                                 </a>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="sp-sources-empty">

@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     rel="stylesheet"
                 />
             </head>
-            <body>
+            <body suppressHydrationWarning>
                 <div className="app-shell">
                     <Suspense fallback={<div style={{ width: "240px", backgroundColor: "var(--sidebar-bg)" }} />}>
                         <Sidebar />
