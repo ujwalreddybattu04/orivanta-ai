@@ -56,8 +56,11 @@ function generateThreadId() {
 }
 
 export interface ResearchStep {
-    type: 'thought' | 'query_step' | 'status';
+    type: 'thought' | 'query_step' | 'status' | 'research_step' | 'research_progress' | 'tool_executing' | 'tool_result';
     content: string;
+    detail?: string;
+    step?: string;
+    tool?: string;
 }
 
 export interface SearchState {
@@ -74,7 +77,9 @@ export interface SearchState {
     error: string | null;
     model: string;
     tokensUsed: number;
-    thoughtTime: number; // Added to capture exact backend calculation
+    thoughtTime: number;
+    toolsUsed: string[];
+    toolsSelected: string[];
 }
 
 export function useSearch(initialQuery: string, focusMode: string = "all", existingThreadId?: string) {
@@ -93,6 +98,8 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
         model: "Auto",
         tokensUsed: 0,
         thoughtTime: 0,
+        toolsUsed: [],
+        toolsSelected: [],
     });
 
     // --- BUTTERY SMOOTH STREAMING BUFFER ---
@@ -229,6 +236,8 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
             isStreaming: true,
             isConnecting: true,
             error: null,
+            toolsUsed: [],
+            toolsSelected: [],
         }));
 
         try {
@@ -286,11 +295,71 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
                                 ...prev,
                                 model: json.model || "Auto",
                                 tokensUsed: json.tokens_used || 0,
+                                toolsUsed: json.tools_used || prev.toolsUsed,
+                            }));
+                        } else if (json.type === "tools_selected") {
+                            setState(prev => ({
+                                ...prev,
+                                toolsSelected: json.tools || [],
+                            }));
+                        } else if (json.type === "tool_executing") {
+                            const toolName = json.tool || "";
+                            const toolLabel = _toolDisplayName(toolName);
+                            setState(prev => ({
+                                ...prev,
+                                researchSteps: [...prev.researchSteps, {
+                                    type: 'tool_executing' as const,
+                                    content: `Using ${toolLabel}`,
+                                    tool: toolName,
+                                }]
+                            }));
+                        } else if (json.type === "tool_result") {
+                            const toolName = json.tool || "";
+                            const toolLabel = _toolDisplayName(toolName);
+                            const timeMs = json.execution_time_ms || 0;
+                            setState(prev => ({
+                                ...prev,
+                                researchSteps: [...prev.researchSteps, {
+                                    type: 'tool_result' as const,
+                                    content: `${toolLabel} completed${timeMs ? ` (${timeMs}ms)` : ''}`,
+                                    tool: toolName,
+                                }]
                             }));
                         } else if (json.type === "thought" || json.type === "query_step" || json.type === "status") {
                             setState(prev => ({
                                 ...prev,
                                 researchSteps: [...prev.researchSteps, { type: json.type, content: json.content }]
+                            }));
+                        } else if (json.type === "research_start") {
+                            setState(prev => ({
+                                ...prev,
+                                researchSteps: [
+                                    ...prev.researchSteps,
+                                    { type: 'status', content: 'Conducting deep research' },
+                                ]
+                            }));
+                        } else if (json.type === "research_step") {
+                            const step = json.step || "";
+                            const detail = json.detail || "";
+                            if (step === "Searching") {
+                                setState(prev => ({
+                                    ...prev,
+                                    researchSteps: [...prev.researchSteps, { type: 'query_step', content: detail }]
+                                }));
+                            } else {
+                                // Show only the detail — step name is internal
+                                setState(prev => ({
+                                    ...prev,
+                                    researchSteps: [...prev.researchSteps, { type: 'thought', content: detail }]
+                                }));
+                            }
+                        } else if (json.type === "research_progress") {
+                            setState(prev => ({
+                                ...prev,
+                                researchSteps: [...prev.researchSteps, {
+                                    type: 'status',
+                                    content: json.status || 'Continuing research'
+                                }]
                             }));
                         } else if (json.type === "thought_time") {
                             setState(prev => ({ ...prev, thoughtTime: json.time || 0 }));
@@ -422,4 +491,23 @@ export function useSearch(initialQuery: string, focusMode: string = "all", exist
         isDisplayComplete: !state.isStreaming && !isBufferDraining,
         appendQuery,
     };
+}
+
+// ── Tool display names for UI ────────────────────────────────────────────────
+const _TOOL_LABELS: Record<string, string> = {
+    web_search: "Web Search",
+    image_search: "Image Search",
+    calculator: "Calculator",
+    url_reader: "URL Reader",
+    weather: "Weather",
+    news_search: "News Search",
+    academic: "Academic Search",
+    video_search: "Video Search",
+    code_runner: "Code Runner",
+    finance: "Finance Data",
+    translation: "Translator",
+};
+
+function _toolDisplayName(name: string): string {
+    return _TOOL_LABELS[name] || name.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }

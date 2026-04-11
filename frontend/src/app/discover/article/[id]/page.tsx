@@ -55,6 +55,53 @@ function timeAgo(iso: string): string {
     return `${days} day${days !== 1 ? "s" : ""} ago`;
 }
 
+// ── GPT-style animated thinking text driven by REAL backend SSE events ───────
+
+function ArticleThinkingText({ messages }: { messages: string[] }) {
+    const [displayIdx, setDisplayIdx] = useState(0);
+    const [text, setText] = useState("");
+    const charRef = useRef(0);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const [typing, setTyping] = useState(true);
+    const shownCountRef = useRef(0);
+
+    // When a new message arrives from backend, jump to it immediately
+    useEffect(() => {
+        if (messages.length > 0 && messages.length > shownCountRef.current) {
+            shownCountRef.current = messages.length;
+            setDisplayIdx(messages.length - 1);
+        }
+    }, [messages.length]);
+
+    const current = messages[displayIdx] || "Thinking";
+
+    // Typewriter: reveal one char at a time
+    useEffect(() => {
+        charRef.current = 0;
+        setText("");
+        setTyping(true);
+        intervalRef.current = setInterval(() => {
+            charRef.current++;
+            if (charRef.current <= current.length) {
+                setText(current.slice(0, charRef.current));
+            } else {
+                setTyping(false);
+                if (intervalRef.current) clearInterval(intervalRef.current);
+            }
+        }, 12);
+        return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    }, [displayIdx, current]);
+
+    // If no new message arrives for a while, stay on last message (no cycling to stale ones)
+
+    return (
+        <>
+            <span className="article-thought-shimmer">{text}</span>
+            <span className="article-thought-cursor" />
+        </>
+    );
+}
+
 // ── Corten sparkle icon (like Perplexity's logo in articles) ─────────────────
 function CortenSparkle({ size = 16 }: { size?: number }) {
     return (
@@ -83,6 +130,7 @@ export default function ArticleDetailPage() {
     const [aiSources, setAiSources] = useState<SearchSource[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [thoughtSteps, setThoughtSteps] = useState(0);
+    const [liveSteps, setLiveSteps] = useState<string[]>([]);
     const [showThought, setShowThought] = useState(false);
     const abortRef = useRef<AbortController | null>(null);
 
@@ -130,6 +178,7 @@ export default function ArticleDetailPage() {
         setAiContent("");
         setAiSources([]);
         setThoughtSteps(0);
+        setLiveSteps([]);
         streamBufferRef.current = "";
 
         const controller = new AbortController();
@@ -194,6 +243,10 @@ export default function ArticleDetailPage() {
                             }
                         } else if (evt.type === "query_step" || evt.type === "thought" || evt.type === "status") {
                             setThoughtSteps(prev => prev + 1);
+                            const stepContent = evt.content ?? evt.data ?? "";
+                            if (stepContent) {
+                                setLiveSteps(prev => [...prev, stepContent]);
+                            }
                         }
                     } catch { /* skip */ }
                 }
@@ -379,14 +432,20 @@ export default function ArticleDetailPage() {
                     {/* ── AI Generated Summary ── */}
                     {(aiContent || isGenerating) && (
                         <div className="article-ai-section">
-                            {/* Thought steps indicator */}
-                            {thoughtSteps > 0 && (
+                            {/* GPT-style animated thinking indicator */}
+                            {(thoughtSteps > 0 || isGenerating) && (
                                 <button
                                     className="article-thought-toggle"
                                     onClick={() => setShowThought(!showThought)}
                                 >
-                                    <span className="article-thought-dot" />
-                                    <span>Completed {thoughtSteps} step{thoughtSteps !== 1 ? "s" : ""}</span>
+                                    <span className={`article-thought-dot ${!isGenerating ? 'done' : ''}`} />
+                                    {isGenerating && !aiContent ? (
+                                        <ArticleThinkingText messages={liveSteps} />
+                                    ) : isGenerating && aiContent ? (
+                                        <span className="article-thought-shimmer">Synthesizing the summary</span>
+                                    ) : (
+                                        <span>Thought for {thoughtSteps} step{thoughtSteps !== 1 ? "s" : ""}</span>
+                                    )}
                                     <ChevronDown
                                         size={13}
                                         style={{

@@ -13,6 +13,8 @@ import "@/styles/code-runner.css";
 import "@/styles/html-preview.css";
 import "@/styles/auth.css";
 import "@/styles/discover.css";
+import "@/styles/history.css";
+import "@/styles/spaces.css";
 import { Suspense } from "react";
 import { Sidebar } from "@/components/layout";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@/config/constants";

@@ -1488,8 +1488,61 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.8);
     flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+    animation: article-dot-glow 2s ease-in-out infinite;
+}
+
+.article-thought-dot.done {
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: none;
+    animation: none;
+}
+
+@keyframes article-dot-glow {
+    0%, 100% { box-shadow: 0 0 4px rgba(255, 255, 255, 0.2); }
+    50% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+}
+
+/* GPT-style shimmer text on discover article */
+.article-thought-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.45) 0%,
+        rgba(255, 255, 255, 0.9) 25%,
+        rgba(190, 210, 255, 0.95) 50%,
+        rgba(255, 255, 255, 0.9) 75%,
+        rgba(255, 255, 255, 0.45) 100%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: article-shimmer-flow 2.5s ease-in-out infinite;
+}
+
+@keyframes article-shimmer-flow {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+/* Blinking cursor */
+.article-thought-cursor {
+    display: inline-block;
+    width: 1.5px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 1px;
+    margin-left: 2px;
+    flex-shrink: 0;
+    animation: article-cursor-blink 0.8s step-end infinite;
+}
+
+@keyframes article-cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
 }
 
 /* AI content typography (Perplexity text styling) */

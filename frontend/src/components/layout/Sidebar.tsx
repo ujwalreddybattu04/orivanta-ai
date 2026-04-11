@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Pin, PinOff, MoreHorizontal, Eraser, Trash2, Edit3 } from "lucide-react";
-import { BRAND_NAME, STORAGE_KEYS, EVENTS } from "@/config/constants";
+import { Pin, ChevronDown } from "lucide-react";
+import { STORAGE_KEYS, EVENTS } from "@/config/constants";
+import HistoryModal from "./HistoryModal";
+
+const SIDEBAR_HISTORY_LIMIT = 7;
 
 const NAV_ITEMS = [
     {
@@ -57,179 +60,65 @@ export default function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [threads, setThreads] = useState<any[]>([]);
-    const [searchQuery, setSearchQuery] = useState("");
-
-    // Thread management state
     const [pinnedThreadIds, setPinnedThreadIds] = useState<string[]>([]);
-    const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
-    const [editingTitle, setEditingTitle] = useState("");
-    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [threadToDelete, setThreadToDelete] = useState<{ id: string, title: string } | null>(null);
+    const [historyOpen, setHistoryOpen] = useState(true);
+    const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
-    // Read threads and pins from local storage
     const loadThreads = () => {
-        if (typeof window !== "undefined") {
-            try {
-                // Logic: Prefer Current Brand, Fallback to Legacy for migration
-                let threadsJson = localStorage.getItem(STORAGE_KEYS.THREADS);
-                if (!threadsJson) {
-                    threadsJson = localStorage.getItem("orivanta_threads");
-                    if (threadsJson) {
-                        localStorage.setItem(STORAGE_KEYS.THREADS, threadsJson);
-                    }
-                }
-
-                if (threadsJson) {
-                    setThreads(JSON.parse(threadsJson));
-                }
-
-                let pinsJson = localStorage.getItem(STORAGE_KEYS.PINNED_THREADS);
-                if (!pinsJson) {
-                    pinsJson = localStorage.getItem("orivanta_pinned_threads");
-                    if (pinsJson) {
-                        localStorage.setItem(STORAGE_KEYS.PINNED_THREADS, pinsJson);
-                    }
-                }
-
-                if (pinsJson) {
-                    setPinnedThreadIds(JSON.parse(pinsJson));
-                }
-
-            } catch (e) {
-                console.error("Failed to load threads", e);
+        if (typeof window === "undefined") return;
+        try {
+            let threadsJson = localStorage.getItem(STORAGE_KEYS.THREADS);
+            if (!threadsJson) {
+                threadsJson = localStorage.getItem("orivanta_threads");
+                if (threadsJson) localStorage.setItem(STORAGE_KEYS.THREADS, threadsJson);
             }
+            if (threadsJson) setThreads(JSON.parse(threadsJson));
+
+            let pinsJson = localStorage.getItem(STORAGE_KEYS.PINNED_THREADS);
+            if (!pinsJson) {
+                pinsJson = localStorage.getItem("orivanta_pinned_threads");
+                if (pinsJson) localStorage.setItem(STORAGE_KEYS.PINNED_THREADS, pinsJson);
+            }
+            if (pinsJson) setPinnedThreadIds(JSON.parse(pinsJson));
+        } catch (e) {
+            console.error("Failed to load threads", e);
         }
     };
 
     useEffect(() => {
         loadThreads();
         window.addEventListener(EVENTS.THREADS_UPDATED, loadThreads);
-
-        // Close menu on click outside
-        const handleClickOutside = () => { setActiveMenuId(null); };
-        window.addEventListener("click", handleClickOutside);
-
-        return () => {
-            window.removeEventListener(EVENTS.THREADS_UPDATED, loadThreads);
-            window.removeEventListener("click", handleClickOutside);
-        };
+        return () => window.removeEventListener(EVENTS.THREADS_UPDATED, loadThreads);
     }, []);
 
-    // Sync collapsed state with CSS variable for layout consistency
     useEffect(() => {
         if (typeof window !== "undefined") {
-            const width = isCollapsed ? "72px" : "240px";
-            document.documentElement.style.setProperty("--sidebar-width", width);
+            document.documentElement.style.setProperty("--sidebar-width", isCollapsed ? "72px" : "240px");
         }
     }, [isCollapsed]);
 
-    // Thread Actions
-    const togglePin = (e: React.MouseEvent, id: string) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const newPins = pinnedThreadIds.includes(id)
-            ? pinnedThreadIds.filter(pid => pid !== id)
-            : [id, ...pinnedThreadIds];
-
-        setPinnedThreadIds(newPins);
-        localStorage.setItem(STORAGE_KEYS.PINNED_THREADS, JSON.stringify(newPins));
-        setActiveMenuId(null);
-    };
-
-    const handleDeleteClick = (e: React.MouseEvent, thread: any) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setThreadToDelete({ id: thread.id, title: thread.title || thread.query });
-        setShowDeleteModal(true);
-        setActiveMenuId(null);
-    };
-
-    const confirmDelete = () => {
-        if (!threadToDelete) return;
-
-        const { id } = threadToDelete;
-        const updatedThreads = threads.filter(t => t.id !== id);
-        setThreads(updatedThreads);
-        localStorage.setItem(STORAGE_KEYS.THREADS, JSON.stringify(updatedThreads));
-
-        // Also remove from pins if present
-        const updatedPins = pinnedThreadIds.filter(pid => pid !== id);
-        setPinnedThreadIds(updatedPins);
-        localStorage.setItem(STORAGE_KEYS.PINNED_THREADS, JSON.stringify(updatedPins));
-
-        window.dispatchEvent(new Event(EVENTS.THREADS_UPDATED));
-
-        // If we are on the deleted thread, go home
-        if (activeThreadId === id) {
-            router.push("/");
-        }
-
-        closeDeleteModal();
-    };
-
-    const closeDeleteModal = () => {
-        setShowDeleteModal(false);
-        setThreadToDelete(null);
-    };
-
-    const startRename = (e: React.MouseEvent, thread: any) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setEditingThreadId(thread.id);
-        setEditingTitle(thread.title || thread.query);
-        setActiveMenuId(null);
-    };
-
-    const saveRename = (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        if (!editingThreadId) return;
-
-        const updatedThreads = threads.map(t =>
-            t.id === editingThreadId ? { ...t, title: editingTitle } : t
-        );
-
-        setThreads(updatedThreads);
-        localStorage.setItem("corten_threads", JSON.stringify(updatedThreads));
-        window.dispatchEvent(new Event("corten_threads_updated"));
-
-        setEditingThreadId(null);
-        setEditingTitle("");
-    };
-
-    // Filter AND Sort (Pins go first)
-    const filteredThreads = threads
-        .filter(t => {
-            const s = searchQuery.toLowerCase();
-            return (t.title || "").toLowerCase().includes(s) || (t.query || "").toLowerCase().includes(s);
-        })
-        .sort((a, b) => {
+    // Sort: pinned first, then by updatedAt desc
+    const sortedThreads = useMemo(() => {
+        return [...threads].sort((a, b) => {
             const aPinned = pinnedThreadIds.includes(a.id);
             const bPinned = pinnedThreadIds.includes(b.id);
             if (aPinned && !bPinned) return -1;
             if (!aPinned && bPinned) return 1;
-            return 0; // Maintain relative order for same pin status
+            return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
         });
+    }, [threads, pinnedThreadIds]);
+
+    const recentThreads = sortedThreads.slice(0, SIDEBAR_HISTORY_LIMIT);
+    const hasMore = sortedThreads.length > SIDEBAR_HISTORY_LIMIT;
 
     return (
         <>
-            {/* Mobile Burger Menu Button */}
-            <button
-                className="mobile-menu-toggle"
-                onClick={() => setIsMobileOpen(true)}
-                aria-label="Open menu"
-                suppressHydrationWarning
-            >
+            {/* Mobile Burger */}
+            <button className="mobile-menu-toggle" onClick={() => setIsMobileOpen(true)} aria-label="Open menu" suppressHydrationWarning>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" x2="21" y1="12" y2="12" /><line x1="3" x2="21" y1="6" y2="6" /><line x1="3" x2="21" y1="18" y2="18" /></svg>
             </button>
 
-            {/* Mobile Backdrop */}
-            {isMobileOpen && (
-                <div
-                    className="sidebar-backdrop"
-                    onClick={() => setIsMobileOpen(false)}
-                />
-            )}
+            {isMobileOpen && <div className="sidebar-backdrop" onClick={() => setIsMobileOpen(false)} />}
 
             <aside className={`sidebar ${isCollapsed ? "collapsed" : ""} ${isMobileOpen ? "mobile-open" : ""}`} id="main-sidebar">
                 {/* Brand */}
@@ -240,14 +129,12 @@ export default function Sidebar() {
                         </svg>
                     </div>
                     <span className="sidebar-brand-name">Corten</span>
-
-                    {/* Mobile Close Button */}
                     <button className="mobile-close-btn" onClick={() => setIsMobileOpen(false)} suppressHydrationWarning>
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="6" y1="6" y2="18" /><line x1="6" x2="18" y1="6" y2="18" /></svg>
                     </button>
                 </div>
 
-                {/* Navigation */}
+                {/* Nav */}
                 <nav className="sidebar-nav">
                     {NAV_ITEMS.map((item) => (
                         <Link
@@ -273,106 +160,49 @@ export default function Sidebar() {
                     <span className="sidebar-link-label">New Thread</span>
                 </Link>
 
-                {/* Memory Ledger Section */}
+                {/* ── History Section (Grok-style) ── */}
                 <div className="sidebar-divider" />
-                <div className="sidebar-section">
-                    <div className="sidebar-section-title">MEMORY LEDGER</div>
+                <div className="sidebar-history">
+                    <button
+                        className={`sidebar-history-toggle ${historyOpen ? "open" : ""}`}
+                        onClick={() => setHistoryOpen(!historyOpen)}
+                        suppressHydrationWarning
+                    >
+                        <span className="sidebar-history-label">History</span>
+                        <ChevronDown size={14} className="sidebar-history-chevron" />
+                    </button>
 
-                    <div className="memory-search">
-                        <svg className="memory-search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-                        <input
-                            type="text"
-                            placeholder="Search threads..."
-                            className="memory-search-input"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            suppressHydrationWarning
-                        />
-                    </div>
+                    {historyOpen && (
+                        <div className="sidebar-history-list">
+                            {recentThreads.length === 0 ? (
+                                <div className="sidebar-history-empty">No conversations yet</div>
+                            ) : (
+                                recentThreads.map((thread) => (
+                                    <Link
+                                        key={thread.id}
+                                        href={`/search?q=${encodeURIComponent(thread.query)}&id=${thread.id}`}
+                                        className={`sidebar-history-item ${thread.id === activeThreadId ? "active" : ""}`}
+                                    >
+                                        {pinnedThreadIds.includes(thread.id) && (
+                                            <Pin size={11} className="sidebar-history-pin" fill="currentColor" />
+                                        )}
+                                        <span className="sidebar-history-text">
+                                            {thread.title || thread.query}
+                                        </span>
+                                    </Link>
+                                ))
+                            )}
 
-                    <div className="memory-filters">
-                        <button className="memory-filter active" suppressHydrationWarning>All</button>
-                        <button className="memory-filter" suppressHydrationWarning>Today</button>
-                        <button className="memory-filter" suppressHydrationWarning>Yesterday</button>
-                    </div>
-
-                    <div className="memory-list">
-                        {filteredThreads.length === 0 ? (
-                            <div style={{ padding: "0 12px", color: "var(--text-muted)", fontSize: "12px" }}>
-                                No threads found.
-                            </div>
-                        ) : (
-                            filteredThreads.map((thread) => (
-                                <div key={thread.id} className="memory-item-wrapper">
-                                    {editingThreadId === thread.id ? (
-                                        <form className="memory-rename-form" onSubmit={saveRename}>
-                                            <input
-                                                autoFocus
-                                                className="memory-rename-input"
-                                                value={editingTitle}
-                                                onChange={(e) => setEditingTitle(e.target.value)}
-                                                onBlur={() => saveRename()}
-                                                onKeyDown={(e) => e.key === "Escape" && setEditingThreadId(null)}
-                                            />
-                                        </form>
-                                    ) : (
-                                        <Link
-                                            href={`/search?q=${encodeURIComponent(thread.query)}&id=${thread.id}`}
-                                            className={`memory-item ${thread.id === activeThreadId ? 'active' : ''}`}
-                                        >
-                                            <span className="memory-item-text">
-                                                {pinnedThreadIds.includes(thread.id) && (
-                                                    <Pin size={12} className="pin-indicator" fill="currentColor" />
-                                                )}
-                                                {thread.title || thread.query}
-                                            </span>
-
-                                            <div className="memory-item-actions">
-                                                <button
-                                                    className={`more-actions-btn ${activeMenuId === thread.id ? 'active' : ''}`}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        setActiveMenuId(activeMenuId === thread.id ? null : thread.id);
-                                                    }}
-                                                    suppressHydrationWarning
-                                                >
-                                                    <MoreHorizontal size={14} />
-                                                </button>
-                                            </div>
-                                        </Link>
-                                    )}
-
-                                    {activeMenuId === thread.id && (
-                                        <div className="thread-context-menu" onClick={(e) => e.stopPropagation()}>
-                                            <button className="menu-item" onClick={(e) => startRename(e, thread)} suppressHydrationWarning>
-                                                <Edit3 size={12} />
-                                                Rename
-                                            </button>
-                                            <button className="menu-item" onClick={(e) => togglePin(e, thread.id)} suppressHydrationWarning>
-                                                {pinnedThreadIds.includes(thread.id) ? (
-                                                    <>
-                                                        <PinOff size={12} strokeWidth={2} />
-                                                        Unpin
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Pin size={12} strokeWidth={2} />
-                                                        Pin
-                                                    </>
-                                                )}
-                                            </button>
-                                            <div className="menu-divider" />
-                                            <button className="menu-item delete" onClick={(e) => handleDeleteClick(e, thread)} suppressHydrationWarning>
-                                                <Trash2 size={12} />
-                                                Delete
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            ))
-                        )}
-                    </div>
+                            {threads.length > 0 && (
+                                <button
+                                    className="sidebar-history-see-all"
+                                    onClick={() => setHistoryModalOpen(true)}
+                                >
+                                    See all
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
@@ -401,27 +231,10 @@ export default function Sidebar() {
                 </div>
             </aside>
 
-            {/* Delete Confirmation Modal */}
-            {showDeleteModal && (
-                <div className="modal-overlay" onClick={closeDeleteModal}>
-                    <div className="modal-content delete-modal" onClick={e => e.stopPropagation()}>
-                        <h3 className="modal-title">Delete chat?</h3>
-                        <p className="modal-msg">
-                            This will delete <strong>{threadToDelete?.title}</strong>.
-                            <br />
-                            <span className="modal-submsg">Visit settings to delete any memories saved during this chat.</span>
-                        </p>
-                        <div className="modal-actions">
-                            <button className="modal-btn modal-btn--cancel" onClick={closeDeleteModal} suppressHydrationWarning>
-                                Cancel
-                            </button>
-                            <button className="modal-btn modal-btn--delete" onClick={confirmDelete} suppressHydrationWarning>
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <HistoryModal
+                isOpen={historyModalOpen}
+                onClose={() => setHistoryModalOpen(false)}
+            />
         </>
     );
 }

@@ -21,7 +21,7 @@ class GroqLLMService:
         self.default_model = settings.DEFAULT_MODEL
 
     def _build_system_prompt(self, context_results: List[Dict[str, Any]]) -> str:
-        """Constructs a dynamic system prompt without hardcoded brand strings."""
+        """Constructs a dynamic system prompt, token-budgeted for Groq limits."""
         current_date = datetime.now().strftime("%B %d, %Y")
 
         if not context_results:
@@ -36,51 +36,60 @@ class GroqLLMService:
             company_name=settings.COMPANY_NAME,
             current_date=current_date
         )
-        
+
+        # Budget: ~10000 chars for sources (~2500 tokens), leave room for history + output
+        SOURCE_CHAR_BUDGET = 10000
+        chars_used = 0
         for idx, result in enumerate(context_results[:6], start=1):
-            snippet = result.get('snippet', '')[:1000]
-            prompt += f"Source [{idx}]:\n"
-            prompt += f"Title: {result.get('title', 'N/A')}\n"
-            prompt += f"Content: {snippet}\n\n"
-            
+            snippet = result.get('snippet', '')[:600]
+            entry = f"Source [{idx}]:\nTitle: {result.get('title', 'N/A')}\nContent: {snippet}\n\n"
+            if chars_used + len(entry) > SOURCE_CHAR_BUDGET:
+                break
+            prompt += entry
+            chars_used += len(entry)
+
         return prompt
 
     async def stream_answer(self, query: str, context_results: List[Dict[str, Any]], history: List[Dict[str, str]] = None) -> AsyncGenerator[str, None]:
         """
         Streams the LLM response chunk by chunk using Groq.
+        Token-budgeted to stay within Groq limits.
         """
         if not self.client:
-            # Assuming error_event is defined elsewhere or this is a placeholder for a structured error.
-            # For now, keeping the original string message as error_event is not defined in this context.
             yield "LLM generation failed because Groq API key is missing."
             return
 
         system_prompt = self._build_system_prompt(context_results)
-        
+
         # Build message history
         messages_payload = [{"role": "system", "content": system_prompt}]
         if history:
             # Take only the last 4 messages (2 complete turns) to save tokens
             recent_history = history[-4:]
-            messages_payload.extend(recent_history)
-        messages_payload.append({"role": "user", "content": query})
+            # Trim each history message to prevent overflow
+            for msg in recent_history:
+                trimmed = {**msg}
+                if len(trimmed.get("content", "")) > 1500:
+                    trimmed["content"] = trimmed["content"][:1500] + "..."
+                messages_payload.append(trimmed)
+        messages_payload.append({"role": "user", "content": query[:1000]})
 
         try:
             stream = await self.client.chat.completions.create(
                 messages=messages_payload,
                 model=self.default_model,
-                temperature=0.2, # Low temperature for factual RAG
-                max_tokens=8192,
+                temperature=0.2,
+                max_tokens=2048,
                 stream=True,
                 stop=[
                     "\n\n**Sources", "\n\nSources", "\n[", "\n- ["
                 ]
             )
-            
+
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content is not None:
                     yield chunk.choices[0].delta.content
-                    
+
         except Exception as e:
             logger.exception(f"Groq API streaming failed: {e}")
             raise e
@@ -88,26 +97,41 @@ class GroqLLMService:
     async def stream_article_summary(self, title: str, article_text: str, search_results: List[Dict[str, Any]], description: str = "") -> AsyncGenerator[str, None]:
         """
         Streams a narrative-style article summary using a dedicated journalist prompt.
+        Token-budgeted to stay within Groq free tier limits (~4500 input tokens).
         """
         if not self.client:
             yield "LLM generation failed because Groq API key is missing."
             return
 
-        # Build the article-specific system prompt with source context
+        # ── Token Budget ──────────────────────────────────────────────────
+        # Groq model context is large enough; the real constraint is TPM.
+        # Give the LLM plenty of source material so the summary is complete.
+        INPUT_CHAR_BUDGET = 18000
         system_prompt = ARTICLE_SUMMARY_SYSTEM_PROMPT
-        for idx, result in enumerate(search_results[:6], start=1):
-            snippet = result.get('snippet', '')[:1000]
-            system_prompt += f"Source [{idx}]:\n"
-            system_prompt += f"Title: {result.get('title', 'N/A')}\n"
-            system_prompt += f"Content: {snippet}\n\n"
+        remaining = INPUT_CHAR_BUDGET - len(system_prompt) - 200  # 200 for user message framing
+
+        # Prioritize: article text gets most budget, then sources fill the rest
+        article_budget = min(len(article_text), int(remaining * 0.75)) if article_text else 0
+        source_budget = remaining - article_budget
+
+        # Add sources (capped to fit budget)
+        source_chars_used = 0
+        max_sources = 4
+        for idx, result in enumerate(search_results[:max_sources], start=1):
+            snippet = result.get('snippet', '')[:400]
+            entry = f"Source [{idx}]:\nTitle: {result.get('title', 'N/A')}\nContent: {snippet}\n\n"
+            if source_chars_used + len(entry) > source_budget:
+                break
+            system_prompt += entry
+            source_chars_used += len(entry)
 
         # Build the user message with article content
         user_content = f"Write an in-depth summary of this story: \"{title}\"\n\n"
-        if article_text:
-            user_content += f"FULL ARTICLE TEXT:\n{article_text[:5000]}\n\n"
-        if description:
-            user_content += f"ARTICLE EXCERPT: {description}\n\n"
-        user_content += "Write a compelling, flowing narrative summary. Tell the story. Keep it focused and conclude cleanly — do not let the piece trail off."
+        if article_text and article_budget > 0:
+            user_content += f"FULL ARTICLE TEXT:\n{article_text[:article_budget]}\n\n"
+        if description and not article_text:
+            user_content += f"ARTICLE EXCERPT: {description[:800]}\n\n"
+        user_content += "Write a COMPLETE, compelling, flowing narrative summary. Tell the full story from beginning to end. Include a proper concluding paragraph — never stop mid-sentence or mid-thought."
 
         messages_payload = [
             {"role": "system", "content": system_prompt},
@@ -119,9 +143,11 @@ class GroqLLMService:
                 messages=messages_payload,
                 model=self.default_model,
                 temperature=0.4,
-                max_tokens=8192,
+                max_tokens=4096,
                 stream=True,
-                stop=["\n\n**Sources", "\n\nSources", "\n\nReferences"],
+                # No stop sequences — the prompt already forbids source lists,
+                # and stop words like "Sources" / "References" can appear in
+                # legitimate article prose, causing premature truncation.
             )
 
             async for chunk in stream:
@@ -135,7 +161,7 @@ class GroqLLMService:
     async def stream_article_followup(self, title: str, followup: str, previous_summary: str, search_results: List[Dict[str, Any]]) -> AsyncGenerator[str, None]:
         """
         Streams a follow-up answer about a specific article.
-        The LLM knows the article title, the previous summary, and the user's question.
+        Token-budgeted for Groq limits.
         """
         if not self.client:
             yield "LLM generation failed because Groq API key is missing."
@@ -146,25 +172,28 @@ class GroqLLMService:
             f"ARTICLE: \"{title}\"\n\n"
         )
         if previous_summary:
-            system_prompt += f"YOUR PREVIOUS SUMMARY OF THIS ARTICLE:\n{previous_summary[:3000]}\n\n"
+            system_prompt += f"YOUR PREVIOUS SUMMARY OF THIS ARTICLE:\n{previous_summary[:1500]}\n\n"
 
         system_prompt += (
             "RULES:\n"
-            "- Answer the user's question specifically about THIS article. They are referring to THIS story.\n"
-            "- Use the article context and search results to give a thorough, accurate answer.\n"
-            "- Write in clear, flowing prose. Be conversational but informative.\n"
+            "- Answer the user's question specifically about THIS article.\n"
             "- Use inline citations [1], [2] when referencing sources.\n"
             "- NEVER add a Sources/References section at the end.\n"
-            "- If the user asks to 'explain' or 'simplify', rewrite the content in plain language.\n\n"
+            "- Write in clear, flowing prose.\n\n"
             "CONTEXT DATA:\n"
         )
-        for idx, result in enumerate(search_results[:6], start=1):
-            snippet = result.get('snippet', '')[:1000]
-            system_prompt += f"Source [{idx}]:\nTitle: {result.get('title', 'N/A')}\nContent: {snippet}\n\n"
+        source_chars = 0
+        for idx, result in enumerate(search_results[:4], start=1):
+            snippet = result.get('snippet', '')[:400]
+            entry = f"Source [{idx}]:\nTitle: {result.get('title', 'N/A')}\nContent: {snippet}\n\n"
+            if source_chars + len(entry) > 6000:
+                break
+            system_prompt += entry
+            source_chars += len(entry)
 
         messages_payload = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": followup},
+            {"role": "user", "content": followup[:500]},
         ]
 
         try:
@@ -172,7 +201,7 @@ class GroqLLMService:
                 messages=messages_payload,
                 model=self.default_model,
                 temperature=0.4,
-                max_tokens=8192,
+                max_tokens=2048,
                 stream=True,
                 stop=["\n\n**Sources", "\n\nSources", "\n\nReferences"],
             )

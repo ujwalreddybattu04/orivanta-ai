@@ -72,15 +72,78 @@
     }
 }
 
-.thinking-text {
+/* ── Static completed text ── */
+.thinking-text-static {
     font-size: 14.5px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.5);
     letter-spacing: -0.01em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     flex: 1;
+}
+
+/* ── Animated GPT-style thinking text ── */
+.thinking-text-animated {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.thinking-text-shimmer {
+    font-size: 14.5px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+
+    /* Flowing water shimmer gradient on text */
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.45) 0%,
+        rgba(255, 255, 255, 0.9) 25%,
+        rgba(190, 210, 255, 0.95) 50%,
+        rgba(255, 255, 255, 0.9) 75%,
+        rgba(255, 255, 255, 0.45) 100%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer-flow 2.5s ease-in-out infinite;
+}
+
+/* Blinking cursor after text */
+.thinking-cursor {
+    display: inline-block;
+    width: 1.5px;
+    height: 16px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 1px;
+    margin-left: 1px;
+    flex-shrink: 0;
+    animation: cursor-blink 0.8s step-end infinite;
+}
+
+@keyframes shimmer-flow {
+    0% {
+        background-position: 100% 0;
+    }
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+@keyframes cursor-blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
 }
 
 .thinking-chevron {
@@ -104,6 +167,40 @@
     border-left: 1px solid rgba(255, 255, 255, 0.06);
     padding-top: 8px;
     padding-bottom: 6px;
+}
+
+/* ── Live SSE Status Ticker ── */
+.rp-live-ticker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    min-height: 22px;
+    overflow: hidden;
+}
+
+.rp-live-ticker-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffffff;
+    flex-shrink: 0;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.25);
+    animation: ticker-dot-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ticker-dot-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(255, 255, 255, 0.25); }
+    50% { opacity: 0.5; box-shadow: 0 0 2px rgba(255, 255, 255, 0.1); }
+}
+
+.rp-live-ticker-text {
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .research-section {
@@ -183,6 +280,103 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════════════
+   TOOL STATUS ROWS — Premium inline design
+   Icon | Name | ···· | Time + Check
+   ═══════════════════════════════════════ */
+
+.rp-tools-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 340px;
+}
+
+.rp-tool-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.2s ease;
+}
+
+.rp-tool-row:last-child {
+    border-bottom: none;
+}
+
+.rp-tool-row-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+}
+
+.rp-tool-icon {
+    color: rgba(255, 255, 255, 0.45);
+    flex-shrink: 0;
+}
+
+.rp-tool-row-done .rp-tool-icon {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.rp-tool-row-running .rp-tool-row-icon {
+    background: rgba(255, 255, 255, 0.06);
+    animation: tool-icon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tool-icon-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.rp-tool-row-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.55);
+    flex: 1;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rp-tool-row-done .rp-tool-row-name {
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.rp-tool-row-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.rp-tool-row-time {
+    font-size: 11px;
+    font-family: var(--font-mono, 'Fira Code', monospace);
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 0.02em;
+}
+
+.rp-tool-row-check {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.rp-tool-row-running .rp-tool-row-status {
+    color: rgba(255, 255, 255, 0.35);
 }
 
 /* ═══════════════════════════════════════

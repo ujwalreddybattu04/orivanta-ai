@@ -1,0 +1,671 @@
+/* =============================================================================
+   Corten AI — Spaces Page  (Perplexity-inspired)
+   ============================================================================= */
+
+/* ── Page shell ── */
+.sp-spaces-page {
+    min-height: 100vh;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Header ── */
+.sp-spaces-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 36px;
+    border-bottom: none;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: var(--color-bg-primary);
+    z-index: 10;
+}
+
+.sp-spaces-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.sp-spaces-search-wrap {
+    flex: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.sp-spaces-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
+}
+
+.sp-spaces-search {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 9px 14px 9px 38px;
+    color: #fff;
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 150ms ease;
+}
+.sp-spaces-search::placeholder { color: rgba(255, 255, 255, 0.35); }
+.sp-spaces-search:focus { border-color: rgba(255, 255, 255, 0.2); }
+
+.sp-spaces-create-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    background: #fff;
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 150ms ease;
+}
+.sp-spaces-create-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+/* ── Body ── */
+.sp-spaces-body {
+    flex: 1;
+    padding: 28px 36px 48px;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* ── Empty state ── */
+.sp-spaces-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 20px;
+    gap: 12px;
+}
+
+.sp-spaces-empty-icon {
+    color: rgba(255, 255, 255, 0.15);
+    margin-bottom: 8px;
+}
+
+.sp-spaces-empty h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.sp-spaces-empty p {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.45);
+    max-width: 380px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.sp-spaces-empty-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 10px 22px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.sp-spaces-empty-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Section ── */
+.sp-spaces-section {
+    margin-bottom: 36px;
+}
+
+.sp-spaces-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 16px;
+}
+
+.sp-spaces-no-results {
+    text-align: center;
+    padding: 40px 0;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+}
+
+/* ── Grid ── */
+.sp-spaces-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+/* ── Space Card ── */
+.sp-space-card-wrap {
+    position: relative;
+}
+
+.sp-space-card {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 200ms ease;
+    min-height: 155px;
+}
+.sp-space-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.sp-space-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-bottom: 14px;
+}
+
+.sp-space-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.sp-space-card-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    margin: 0 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sp-space-card-desc {
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.sp-space-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sp-space-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sp-space-card-date {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.sp-space-card-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+}
+
+.sp-space-card-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.3);
+}
+.sp-space-card-stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Card menu */
+.sp-space-card-menu {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.4);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 150ms ease;
+    z-index: 2;
+}
+.sp-space-card-wrap:hover .sp-space-card-menu { opacity: 1; }
+.sp-space-card-menu:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Add new card */
+.sp-space-card--add {
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 13.5px;
+    cursor: pointer;
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+.sp-space-card--add:hover {
+    color: rgba(255, 255, 255, 0.6);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Context menu */
+.sp-space-ctx {
+    position: absolute;
+    top: 46px;
+    right: 14px;
+    z-index: 20;
+    background: rgba(18, 18, 18, 0.97);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 4px;
+    min-width: 140px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+    animation: spCtxIn 0.15s ease;
+}
+@keyframes spCtxIn {
+    from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sp-space-ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    transition: background 120ms ease;
+}
+.sp-space-ctx-item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+.sp-space-ctx-danger:hover { background: rgba(244, 63, 94, 0.12); color: #fb7185; }
+.sp-space-ctx-divider { height: 1px; background: rgba(255, 255, 255, 0.07); margin: 3px 4px; }
+
+/* =============================================================================
+   OVERLAY + MODALS
+   ============================================================================= */
+
+.sp-spaces-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: spFadeIn 0.2s ease;
+}
+@keyframes spFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Create / Edit Modal ── */
+.sp-spaces-form-modal {
+    width: 90vw;
+    max-width: 500px;
+    background: #111;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: spScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes spScaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+.sp-spaces-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 0;
+}
+
+.sp-spaces-form-header h2 {
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+}
+
+.sp-spaces-form-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    transition: color 150ms ease;
+}
+.sp-spaces-form-close:hover { color: #fff; }
+
+.sp-spaces-form {
+    padding: 20px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* Preview inside modal */
+.sp-spaces-form-preview {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+}
+
+.sp-spaces-form-preview-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sp-spaces-form-preview-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* Form fields */
+.sp-spaces-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sp-spaces-form-field label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.sp-form-optional {
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.25);
+    margin-left: 4px;
+}
+
+.sp-spaces-form-field input,
+.sp-spaces-form-field textarea {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    padding: 10px 12px;
+    color: #fff;
+    font-size: 13.5px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 150ms ease;
+    resize: none;
+}
+.sp-spaces-form-field input:focus,
+.sp-spaces-form-field textarea:focus {
+    border-color: rgba(255, 255, 255, 0.22);
+}
+.sp-spaces-form-field input::placeholder,
+.sp-spaces-form-field textarea::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* Icon grid */
+.sp-spaces-icon-grid {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.sp-spaces-icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid transparent;
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.sp-spaces-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+}
+.sp-spaces-icon-btn.active {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Color grid */
+.sp-spaces-color-grid {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.sp-spaces-color-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 150ms ease;
+    position: relative;
+}
+.sp-spaces-color-btn:hover {
+    transform: scale(1.15);
+}
+.sp-spaces-color-btn.active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5), 0 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+/* Privacy toggle */
+.sp-spaces-privacy-toggle {
+    display: flex;
+    gap: 6px;
+}
+
+.sp-spaces-privacy-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.sp-spaces-privacy-btn.active {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+.sp-spaces-privacy-btn:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Form actions */
+.sp-spaces-form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding-top: 6px;
+}
+
+.sp-spaces-form-cancel,
+.sp-spaces-form-submit {
+    padding: 9px 20px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 150ms ease;
+}
+
+.sp-spaces-form-cancel {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+.sp-spaces-form-cancel:hover { background: rgba(255, 255, 255, 0.1); }
+
+.sp-spaces-form-submit {
+    background: #fff;
+    color: #000;
+}
+.sp-spaces-form-submit:hover { background: rgba(255, 255, 255, 0.9); }
+.sp-spaces-form-submit:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ── Delete modal ── */
+.sp-spaces-delete-modal {
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 24px;
+    width: 90%;
+    max-width: 380px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+.sp-spaces-delete-modal h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 8px;
+}
+.sp-spaces-delete-modal p {
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 0 20px;
+    line-height: 1.5;
+}
+.sp-spaces-delete-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.sp-spaces-del-cancel,
+.sp-spaces-del-confirm {
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 150ms ease;
+}
+.sp-spaces-del-cancel {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+.sp-spaces-del-cancel:hover { background: rgba(255, 255, 255, 0.1); }
+.sp-spaces-del-confirm {
+    background: #e53935;
+    color: #fff;
+}
+.sp-spaces-del-confirm:hover { background: #d32f2f; }
+
+/* =============================================================================
+   RESPONSIVE
+   ============================================================================= */
+
+@media (max-width: 768px) {
+    .sp-spaces-header {
+        padding: 16px 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .sp-spaces-search-wrap {
+        order: 3;
+        flex: 1 1 100%;
+        max-width: none;
+    }
+    .sp-spaces-body {
+        padding: 20px 20px 40px;
+    }
+    .sp-spaces-grid {
+        grid-template-columns: 1fr;
+    }
+}
