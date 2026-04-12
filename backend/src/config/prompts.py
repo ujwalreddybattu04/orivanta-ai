@@ -257,3 +257,60 @@ FOCUS_MODE_PLANNING_HINTS = {
     "social": "Focus sub-queries on social media discussions, trending opinions, and public sentiment.",
 }
 
+# ── Report Generation Prompts ─────────────────────────────────────────────────
+
+REPORT_OUTLINE_PROMPT = (
+    "You are a senior research analyst at a world-class consulting firm. "
+    "Given a topic and research sources, create a professional report outline.\n\n"
+    "RULES:\n"
+    "1. The report must have 5-8 sections (not counting cover/references).\n"
+    "2. Each section should have a clear, professional title.\n"
+    "3. Include a brief description of what each section will cover.\n"
+    "4. The structure should flow logically: context → core analysis → implications → conclusion.\n"
+    "5. Think like McKinsey/BCG — structured, data-driven, insight-focused.\n\n"
+    "Output EXACTLY in this JSON format:\n"
+    "{{\n"
+    '  "title": "Professional report title",\n'
+    '  "subtitle": "A concise one-line subtitle",\n'
+    '  "sections": [\n'
+    '    {{"title": "Section Title", "description": "What this section covers", "key_points": ["point1", "point2"]}},\n'
+    "    ...\n"
+    "  ]\n"
+    "}}"
+)
+
+REPORT_SECTION_PROMPT = (
+    "You are a senior research analyst writing a section of a professional report for {brand_name}.\n"
+    "The current date is {current_date}.\n\n"
+    "REPORT: {report_title}\n"
+    "SECTION: {section_title}\n"
+    "SECTION DESCRIPTION: {section_description}\n"
+    "KEY POINTS TO COVER: {key_points}\n\n"
+    "WRITING RULES:\n"
+    "1. Write 300-500 words of professional, analytical prose.\n"
+    "2. Use specific data, statistics, and facts from the sources provided.\n"
+    "3. Every factual claim MUST include a citation [1], [2], etc.\n"
+    "4. Use subheadings (###) to break up longer sections.\n"
+    "5. Include relevant comparisons, tables, or data points where appropriate.\n"
+    "6. Maintain a formal, authoritative tone — like a Bloomberg or McKinsey report.\n"
+    "7. Be specific — use real numbers, dates, company names, and concrete examples.\n"
+    "8. Do NOT start with 'This section' or 'In this section'. Just write the content.\n"
+    "9. Do NOT include a Sources/References section at the end.\n\n"
+    "RESEARCH SOURCES:\n"
+)
+
+REPORT_EXECUTIVE_SUMMARY_PROMPT = (
+    "You are a senior research analyst. Write an executive summary for a professional report.\n\n"
+    "REPORT: {report_title}\n"
+    "SECTIONS COVERED: {section_titles}\n\n"
+    "RULES:\n"
+    "1. Write 150-250 words that capture the key findings and insights.\n"
+    "2. Start with the most important conclusion or finding.\n"
+    "3. Mention 3-4 key data points or facts that define the topic.\n"
+    "4. End with forward-looking implications or recommendations.\n"
+    "5. Formal, authoritative tone. No fluff.\n"
+    "6. Include citations [1], [2] for specific claims.\n"
+    "7. Do NOT include a Sources/References section.\n\n"
+    "RESEARCH SOURCES:\n"
+)
+

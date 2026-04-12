@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle, FormEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { FOCUS_MODES } from "@/config/focusModes";
-import { Code, MessageSquare, Play, Users } from "lucide-react";
+import { Code, MessageSquare, Play, Users, FileText } from "lucide-react";
 
 const PRIMARY_MODES = ["all", "academic", "writing", "math"];
 const primaryFocusModes = FOCUS_MODES.filter(m => PRIMARY_MODES.includes(m.value));
@@ -152,10 +152,21 @@ const SearchBar = forwardRef<SearchBarHandle, object>(function SearchBar(_, ref)
                         </div>
                     </div>
 
-                    {/* Model selector + Submit */}
+                    {/* Model selector + Report + Submit */}
                     <div className="search-model-selector">
                         <button type="button" className="model-dropdown-btn" id="model-selector-btn">
                             Auto <span className="model-dropdown-arrow">▾</span>
+                        </button>
+                        <button
+                            type="button"
+                            className="search-report-btn"
+                            title="Generate detailed report"
+                            onClick={() => {
+                                if (!query.trim()) return;
+                                router.push(`/report?topic=${encodeURIComponent(query)}&focus=${focusMode}`);
+                            }}
+                        >
+                            <FileText size={15} />
                         </button>
                         <button type="submit" className="search-submit-btn" id="search-submit-btn">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>

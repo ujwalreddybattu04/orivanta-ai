@@ -246,6 +246,28 @@
     margin-left: 2px;
 }
 
+/* --- Report Button --- */
+.search-report-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: none;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.search-report-btn:hover {
+    border-color: var(--color-text-secondary);
+    color: var(--color-text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
 /* --- Submit Button --- */
 .search-submit-btn {
     width: 32px;
