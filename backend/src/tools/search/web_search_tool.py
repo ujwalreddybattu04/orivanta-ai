@@ -35,6 +35,7 @@ class WebSearchTool(BaseTool):
 
     async def execute(self, context: ToolContext) -> ToolResult:
         from src.services.web_search_service import tavily_search_service
+        from src.config.prompts import FOCUS_MODE_SEARCH_MODIFIERS
 
         if not tavily_search_service.client:
             return ToolResult(
@@ -46,9 +47,16 @@ class WebSearchTool(BaseTool):
         # Scale results by complexity
         max_results = self._results_for_complexity(context.complexity)
 
+        # Apply focus mode search modifier to steer results
+        search_query = context.query
+        if context.focus_mode and context.focus_mode != "all":
+            modifier = FOCUS_MODE_SEARCH_MODIFIERS.get(context.focus_mode)
+            if modifier:
+                search_query = f"{context.query} {modifier}"
+
         try:
             search_data = await tavily_search_service.search(
-                context.query, max_results=max_results
+                search_query, max_results=max_results
             )
 
             if not isinstance(search_data, dict):

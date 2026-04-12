@@ -290,10 +290,12 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                                                     />
                                                 </form>
                                             ) : (
-                                                <button
+                                                <div
                                                     className={`hm-thread-item ${selectedId === thread.id ? "selected" : ""}`}
                                                     onClick={() => setSelectedId(thread.id)}
                                                     onDoubleClick={() => openThread(thread)}
+                                                    role="button"
+                                                    tabIndex={0}
                                                 >
                                                     <div className="hm-thread-left">
                                                         {pinnedIds.includes(thread.id) && (
@@ -317,7 +319,7 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                                                             <MoreHorizontal size={14} />
                                                         </button>
                                                     </div>
-                                                </button>
+                                                </div>
                                             )}
 
                                             {/* Context menu */}

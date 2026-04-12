@@ -5,7 +5,11 @@ from typing import AsyncGenerator, Dict, Any, List
 
 from groq import AsyncGroq
 from src.config.settings import settings
-from src.config.prompts import RAG_SYSTEM_PROMPT, DIRECT_SYSTEM_PROMPT, PLANNING_SYSTEM_PROMPT, TITLE_SYSTEM_PROMPT, FOLLOW_UP_SYSTEM_PROMPT, ARTICLE_SUMMARY_SYSTEM_PROMPT
+from src.config.prompts import (
+    RAG_SYSTEM_PROMPT, DIRECT_SYSTEM_PROMPT, PLANNING_SYSTEM_PROMPT,
+    TITLE_SYSTEM_PROMPT, FOLLOW_UP_SYSTEM_PROMPT, ARTICLE_SUMMARY_SYSTEM_PROMPT,
+    FOCUS_MODE_PROMPTS, FOCUS_MODE_PLANNING_HINTS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,22 +24,37 @@ class GroqLLMService:
             
         self.default_model = settings.DEFAULT_MODEL
 
-    def _build_system_prompt(self, context_results: List[Dict[str, Any]]) -> str:
-        """Constructs a dynamic system prompt, token-budgeted for Groq limits."""
+    def _build_system_prompt(self, context_results: List[Dict[str, Any]], focus_mode: str = "all") -> str:
+        """Constructs a dynamic system prompt, token-budgeted for Groq limits.
+
+        Injects focus-mode-specific instructions when a specialized mode is active.
+        """
         current_date = datetime.now().strftime("%B %d, %Y")
 
         if not context_results:
-            return DIRECT_SYSTEM_PROMPT.format(
+            prompt = DIRECT_SYSTEM_PROMPT.format(
                 brand_name=settings.BRAND_NAME,
                 company_name=settings.COMPANY_NAME,
                 current_date=current_date
             )
+            # Inject focus mode instructions for direct answers too
+            if focus_mode and focus_mode != "all":
+                focus_instructions = FOCUS_MODE_PROMPTS.get(focus_mode, "")
+                if focus_instructions:
+                    prompt += "\n" + focus_instructions
+            return prompt
 
         prompt = RAG_SYSTEM_PROMPT.format(
             brand_name=settings.BRAND_NAME,
             company_name=settings.COMPANY_NAME,
             current_date=current_date
         )
+
+        # Inject focus mode instructions before sources
+        if focus_mode and focus_mode != "all":
+            focus_instructions = FOCUS_MODE_PROMPTS.get(focus_mode, "")
+            if focus_instructions:
+                prompt += focus_instructions
 
         # Budget: ~10000 chars for sources (~2500 tokens), leave room for history + output
         SOURCE_CHAR_BUDGET = 10000
@@ -50,16 +69,17 @@ class GroqLLMService:
 
         return prompt
 
-    async def stream_answer(self, query: str, context_results: List[Dict[str, Any]], history: List[Dict[str, str]] = None) -> AsyncGenerator[str, None]:
+    async def stream_answer(self, query: str, context_results: List[Dict[str, Any]], history: List[Dict[str, str]] = None, focus_mode: str = "all") -> AsyncGenerator[str, None]:
         """
         Streams the LLM response chunk by chunk using Groq.
         Token-budgeted to stay within Groq limits.
+        Focus mode injects specialized instructions for different query types.
         """
         if not self.client:
             yield "LLM generation failed because Groq API key is missing."
             return
 
-        system_prompt = self._build_system_prompt(context_results)
+        system_prompt = self._build_system_prompt(context_results, focus_mode)
 
         # Build message history
         messages_payload = [{"role": "system", "content": system_prompt}]
@@ -214,16 +234,22 @@ class GroqLLMService:
             logger.exception(f"Groq API article follow-up streaming failed: {e}")
             raise e
 
-    async def generate_research_plan(self, query: str) -> Dict[str, Any]:
+    async def generate_research_plan(self, query: str, focus_mode: str = "all") -> Dict[str, Any]:
         """
         Generates a formal research intent and 3-4 specific search strings.
-        Used for the 'Thinking' UI phase.
+        Used for the 'Thinking' UI phase. Focus mode steers sub-query generation.
         """
         if not self.client:
             return {"intent": f"Search for {query}", "queries": [query]}
-            
+
         system_prompt = PLANNING_SYSTEM_PROMPT
-        
+
+        # Inject focus mode planning hint
+        if focus_mode and focus_mode != "all":
+            hint = FOCUS_MODE_PLANNING_HINTS.get(focus_mode)
+            if hint:
+                system_prompt += f"\n\nFOCUS MODE INSTRUCTION: {hint}"
+
         try:
             chat_completion = await self.client.chat.completions.create(
                 messages=[

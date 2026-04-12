@@ -43,6 +43,11 @@ SMART_ROUTER_PROMPT = (
     '- "quick": Simple factual lookups with ONE clear answer. "What is X?", "Who is Y?", "When did Z happen?", definitions, single-entity questions.\n'
     '- "standard": Most queries — news, how-to, explanations, opinions, code help, or anything needing web sources for a solid answer.\n'
     '- "deep": ONLY for genuinely complex queries that need multi-step research: comparisons of 2+ entities, multi-faceted analysis, "best X for Y" evaluations, investment/strategy questions, queries with "compare", "vs", "pros and cons", "should I", "analyze", "in-depth", research reports, or questions that clearly have multiple angles requiring separate searches.\n\n'
+    "FOCUS MODE OVERRIDES:\n"
+    '- If focus_mode is "math", classify math problems with strategy "direct" (use calculator tool).\n'
+    '- If focus_mode is "writing", strategy should be "direct" for writing tasks (no web search needed) or "standard" if research is needed for the writing.\n'
+    '- If focus_mode is "academic", prefer "standard" or "deep" strategies to ensure thorough sourcing.\n'
+    '- For all other focus modes, route normally but note the mode in your reasoning.\n\n'
     "COMPLEXITY GUIDE:\n"
     "1 = Trivial (greeting, identity, simple math)\n"
     "2 = Simple lookup (single fact, definition, who/what/when)\n"
@@ -69,9 +74,13 @@ class SmartRouter:
     Returns routing decision that the orchestrator uses to pick the right pipeline.
     """
 
-    async def route(self, query: str) -> Dict[str, Any]:
+    async def route(self, query: str, focus_mode: str = "all") -> Dict[str, Any]:
         """
         Analyze query and return routing decision.
+
+        Args:
+            query: The user's search query
+            focus_mode: Active focus mode ("all", "academic", "writing", "math", etc.)
 
         Returns:
             {
@@ -79,24 +88,30 @@ class SmartRouter:
                 "complexity": 1-5,
                 "query_type": str,
                 "reasoning": str,
-                "sub_questions": list[str]
+                "sub_questions": list[str],
+                "focus_mode": str
             }
         """
         from src.services.llm_service import groq_llm_service
 
         if not groq_llm_service.client:
-            return self._fallback(query)
+            return self._fallback(query, focus_mode)
 
         system_prompt = SMART_ROUTER_PROMPT.format(
             brand_name=settings.BRAND_NAME,
             company_name=settings.COMPANY_NAME,
         )
 
+        # Inject focus mode context into the router's user message
+        user_message = query
+        if focus_mode and focus_mode != "all":
+            user_message = f"[FOCUS MODE: {focus_mode.upper()}] {query}"
+
         try:
             response = await groq_llm_service.client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": query},
+                    {"role": "user", "content": user_message},
                 ],
                 model=settings.ROUTER_MODEL,
                 temperature=0.0,
@@ -132,7 +147,7 @@ class SmartRouter:
 
             # ── TOOL SELECTION ────────────────────────────────────────────
             # Use the tool registry to pick the right tools for this query
-            selected_tools = self._select_tools(query, query_type, complexity, strategy)
+            selected_tools = self._select_tools(query, query_type, complexity, strategy, focus_mode)
 
             route_result = {
                 "strategy": strategy,
@@ -141,21 +156,22 @@ class SmartRouter:
                 "reasoning": result.get("reasoning", ""),
                 "sub_questions": sub_questions,
                 "tools": selected_tools,
+                "focus_mode": focus_mode,
             }
 
             logger.info(
                 f"[SmartRouter] '{query[:60]}' → strategy={strategy} "
-                f"complexity={complexity} type={query_type} "
+                f"complexity={complexity} type={query_type} focus={focus_mode} "
                 f"tools={selected_tools} subs={len(sub_questions)}"
             )
             return route_result
 
         except Exception as e:
             logger.error(f"[SmartRouter] Routing failed for '{query}': {e}")
-            return self._fallback(query)
+            return self._fallback(query, focus_mode)
 
     def _select_tools(
-        self, query: str, query_type: str, complexity: int, strategy: str
+        self, query: str, query_type: str, complexity: int, strategy: str, focus_mode: str = "all"
     ) -> List[str]:
         """
         Use the tool registry to select which tools should handle this query.
@@ -168,14 +184,15 @@ class SmartRouter:
             query_type=query_type,
             complexity=complexity,
             strategy=strategy,
+            focus_mode=focus_mode,
         )
 
         selected = tool_registry.select_tools(context)
         return [t.name for t in selected]
 
-    def _fallback(self, query: str) -> Dict[str, Any]:
+    def _fallback(self, query: str, focus_mode: str = "all") -> Dict[str, Any]:
         """Robust fallback — always routes to standard search."""
-        tools = self._select_tools(query, "factual", 3, STRATEGY_STANDARD)
+        tools = self._select_tools(query, "factual", 3, STRATEGY_STANDARD, focus_mode)
         return {
             "strategy": STRATEGY_STANDARD,
             "complexity": 3,
@@ -183,6 +200,7 @@ class SmartRouter:
             "reasoning": "Fallback due to routing error",
             "sub_questions": [],
             "tools": tools,
+            "focus_mode": focus_mode,
         }
 
 

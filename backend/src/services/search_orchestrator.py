@@ -59,7 +59,7 @@ class SearchOrchestrator:
             short_query = (query[:55] + "\u2026") if len(query) > 55 else query
             yield _sse("status", {"content": f"Understanding \"{short_query}\""})
 
-            route = await smart_router.route(query)
+            route = await smart_router.route(query, focus_mode)
             strategy = route.get("strategy", STRATEGY_STANDARD)
             complexity = route.get("complexity", 3)
             query_type = route.get("query_type", "factual")
@@ -77,6 +77,7 @@ class SearchOrchestrator:
                     "tools": selected_tool_names,
                     "strategy": strategy,
                     "query_type": query_type,
+                    "focus_mode": focus_mode,
                 })
 
             # Emit a dynamic routing status so user sees what approach was chosen
@@ -134,7 +135,7 @@ class SearchOrchestrator:
                                 # Let LLM enhance the tool result with explanation
                                 tool_context_str = f"TOOL RESULT ({result.tool_name}):\n{formatted}\n\nProvide a clear, helpful response incorporating this data. Be conversational. Start directly with the answer."
                                 async for chunk in groq_llm_service.stream_answer(
-                                    tool_context_str, [], messages
+                                    tool_context_str, [], messages, focus_mode
                                 ):
                                     yield _sse("token", {"content": chunk})
 
@@ -145,7 +146,7 @@ class SearchOrchestrator:
                 thought_time = time.time() - start_time
                 yield _sse("thought_time", {"time": round(thought_time, 1)})
 
-                async for chunk in groq_llm_service.stream_answer(query, [], messages):
+                async for chunk in groq_llm_service.stream_answer(query, [], messages, focus_mode):
                     yield _sse("token", {"content": chunk})
 
                 yield _sse("done", {})
@@ -163,6 +164,7 @@ class SearchOrchestrator:
                     query=query,
                     sub_questions=sub_questions,
                     messages=messages,
+                    focus_mode=focus_mode,
                 ):
                     yield event
 
@@ -200,7 +202,7 @@ class SearchOrchestrator:
             # Start plan generation for standard strategy
             if strategy != STRATEGY_QUICK:
                 plan_task = asyncio.create_task(
-                    groq_llm_service.generate_research_plan(query)
+                    groq_llm_service.generate_research_plan(query, focus_mode)
                 )
             else:
                 plan_task = None
@@ -323,7 +325,7 @@ class SearchOrchestrator:
             )
 
             buffer = ""
-            async for chunk in groq_llm_service.stream_answer(query, enriched_results, messages):
+            async for chunk in groq_llm_service.stream_answer(query, enriched_results, messages, focus_mode):
                 buffer += chunk
                 search_window = buffer[-150:] if len(buffer) > 150 else buffer
                 if _CUTOFF_PATTERN.search(search_window):

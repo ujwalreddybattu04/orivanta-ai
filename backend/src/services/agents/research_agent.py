@@ -110,6 +110,7 @@ class ResearchAgent:
         query: str,
         sub_questions: List[str],
         messages: list = None,
+        focus_mode: str = "all",
     ) -> AsyncGenerator[str, None]:
         """
         Execute deep research pipeline. Yields SSE-formatted events.
@@ -127,6 +128,7 @@ class ResearchAgent:
         from src.services.web_search_service import tavily_search_service
         from src.services.llm_service import groq_llm_service
         from src.services.serper_image_service import serper_image_service
+        from src.config.prompts import FOCUS_MODE_SEARCH_MODIFIERS
 
         start_time = time.time()
 
@@ -184,8 +186,13 @@ class ResearchAgent:
                         "detail": sq,
                     })
 
+                # Apply focus mode search modifier to steer results
+                search_modifier = FOCUS_MODE_SEARCH_MODIFIERS.get(focus_mode, "") if focus_mode != "all" else ""
                 search_tasks = [
-                    tavily_search_service.search(sq, max_results=MAX_SOURCES_PER_SEARCH)
+                    tavily_search_service.search(
+                        f"{sq} {search_modifier}".strip() if search_modifier else sq,
+                        max_results=MAX_SOURCES_PER_SEARCH,
+                    )
                     for sq in queries_to_search
                     if sq not in search_history
                 ]
@@ -288,7 +295,7 @@ class ResearchAgent:
             )
 
             async for chunk in self._stream_synthesis(
-                groq_llm_service, query, all_sources, messages
+                groq_llm_service, query, all_sources, messages, focus_mode
             ):
                 buffer += chunk
                 search_window = buffer[-150:] if len(buffer) > 150 else buffer
@@ -392,9 +399,11 @@ class ResearchAgent:
         query: str,
         sources: List[Dict[str, Any]],
         messages: list = None,
+        focus_mode: str = "all",
     ) -> AsyncGenerator[str, None]:
         """Stream the final comprehensive answer using all gathered sources."""
         from datetime import datetime
+        from src.config.prompts import FOCUS_MODE_PROMPTS
 
         current_date = datetime.now().strftime("%B %d, %Y")
         system_prompt = DEEP_SYNTHESIS_PROMPT.format(
@@ -402,6 +411,12 @@ class ResearchAgent:
             company_name=settings.COMPANY_NAME,
             current_date=current_date,
         )
+
+        # Inject focus mode instructions for synthesis
+        if focus_mode and focus_mode != "all":
+            focus_instructions = FOCUS_MODE_PROMPTS.get(focus_mode, "")
+            if focus_instructions:
+                system_prompt += focus_instructions
 
         # Add all sources to context
         for idx, src in enumerate(sources[:MAX_TOTAL_SOURCES], 1):

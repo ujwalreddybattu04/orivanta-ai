@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
     Search, Plus, MoreHorizontal, Edit3, Trash2, Lock, Globe,
     BookOpen, Briefcase, Code, Lightbulb, GraduationCap, Bookmark,
-    FolderOpen, Beaker, PenTool, TrendingUp, X,
-    MessageSquare, Users
+    FolderOpen, Beaker, PenTool, TrendingUp, X, LayoutGrid,
+    MessageSquare
 } from "lucide-react";
-import { STORAGE_KEYS, EVENTS } from "@/config/constants";
+import { STORAGE_KEYS } from "@/config/constants";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,6 +20,8 @@ interface LocalSpace {
     color: string;
     isPrivate: boolean;
     threadIds: string[];
+    links: string[];
+    instructions: string;
     createdAt: number;
     updatedAt: number;
 }
@@ -80,7 +81,6 @@ function formatDate(ts: number): string {
 // ── Main Page ────────────────────────────────────────────────────────────────
 
 export default function SpacesPage() {
-    const router = useRouter();
     const [spaces, setSpaces] = useState<LocalSpace[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -107,7 +107,7 @@ export default function SpacesPage() {
         try {
             const raw = localStorage.getItem(STORAGE_KEYS.THREADS);
             if (!raw) return counts;
-            const threads = JSON.parse(raw);
+            JSON.parse(raw);
             for (const space of spaces) {
                 counts[space.id] = space.threadIds?.length || 0;
             }
@@ -134,6 +134,8 @@ export default function SpacesPage() {
             color: data.color,
             isPrivate: data.isPrivate,
             threadIds: [],
+            links: [],
+            instructions: "",
             createdAt: Date.now(),
             updatedAt: Date.now(),
         };
@@ -181,14 +183,21 @@ export default function SpacesPage() {
                         onChange={e => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <button className="sp-spaces-create-btn" onClick={() => setShowCreateModal(true)}>
-                    <Plus size={16} />
-                    <span>New Space</span>
-                </button>
+                <div className="sp-spaces-header-actions">
+                    <Link href="/spaces/templates" className="sp-spaces-tpl-btn">
+                        <LayoutGrid size={14} />
+                        <span>Templates</span>
+                    </Link>
+                    <button className="sp-spaces-create-btn" onClick={() => setShowCreateModal(true)}>
+                        <Plus size={16} />
+                        <span>New Space</span>
+                    </button>
+                </div>
             </div>
 
-            {/* ── My Spaces ── */}
+            {/* ── Body ── */}
             <div className="sp-spaces-body">
+                {/* ── My Spaces ── */}
                 {spaces.length === 0 ? (
                     <div className="sp-spaces-empty">
                         <div className="sp-spaces-empty-icon">
@@ -265,7 +274,7 @@ export default function SpacesPage() {
                         </div>
 
                         {filtered.length === 0 && searchQuery && (
-                            <div className="sp-spaces-no-results">No spaces matching "{searchQuery}"</div>
+                            <div className="sp-spaces-no-results">No spaces matching &ldquo;{searchQuery}&rdquo;</div>
                         )}
                     </>
                 )}
@@ -285,7 +294,7 @@ export default function SpacesPage() {
                 <div className="sp-spaces-overlay" onClick={() => setDeleteId(null)}>
                     <div className="sp-spaces-delete-modal" onClick={e => e.stopPropagation()}>
                         <h3>Delete space?</h3>
-                        <p>Threads inside this space won't be deleted, but they'll be unorganized.</p>
+                        <p>Threads inside this space won&apos;t be deleted, but they&apos;ll be unorganized.</p>
                         <div className="sp-spaces-delete-actions">
                             <button className="sp-spaces-del-cancel" onClick={() => setDeleteId(null)}>Cancel</button>
                             <button className="sp-spaces-del-confirm" onClick={handleDelete}>Delete</button>

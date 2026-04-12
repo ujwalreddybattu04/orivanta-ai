@@ -140,7 +140,7 @@ export default function Sidebar() {
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`sidebar-link ${pathname === item.href ? "active" : ""}`}
+                            className={`sidebar-link ${pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)) ? "active" : ""}`}
                             id={`nav-${item.label.toLowerCase()}`}
                             title={isCollapsed ? item.label : undefined}
                         >
