@@ -1,4 +1,4 @@
-''' testing script of tavily search '''
+''' testing script of tavily search api with grounding'''
 import asyncio
 from tavily import AsyncTavilyClient
 
